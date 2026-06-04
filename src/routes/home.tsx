@@ -1,5 +1,9 @@
 export default function Home() {
     return (
-        <p>Home</p>
+        <main>
+            <div>
+                <h1>Welcome to PelagoHaven!</h1>
+            </div>
+        </main>
     )
 }

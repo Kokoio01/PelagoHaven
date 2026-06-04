@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+    --color-background: oklch(0.2 0.04 160);
+    --color-foreground: oklch(0.7 0.18 150);
+}
+
+html, body {
+    overscroll-behavior: none;
+}
+
+*[data-tauri-drag-region] {
+    app-region: drag;
+}
