@@ -1,13 +1,15 @@
-import {Link, Outlet} from "react-router";
-import {HomeIcon, ShelvingUnitIcon} from "lucide-react";
+import {Link, Outlet, useLocation} from "react-router";
+import {HomeIcon, SettingsIcon, ShelvingUnitIcon} from "lucide-react";
 
 const tabs = [
     { name: "Home", path: "/", icon: <HomeIcon size={28}/> },
-    { name: "Library", path: "/#/library", icon: <ShelvingUnitIcon size={28}/>}
+    { name: "Library", path: "/library", icon: <ShelvingUnitIcon size={28}/>},
+    { name: "Settings", path: "/settings", icon: <SettingsIcon size={28}/>}
 ]
 
 export function AppLayout() {
-    const currentTab = tabs.find(tab => tab.path === window.location.pathname);
+    const location = useLocation();
+    const currentTab = tabs.find((tab) => tab.path === location.pathname);
 
     return (
         <div className="flex flex-col h-screen w-screen bg-chrome text-text">
@@ -19,7 +21,7 @@ export function AppLayout() {
             </header>
             <div className="flex flex-1 flex-row min-w-0">
                 <aside className="h-full p-4 w-16">
-                    <nav className="h-full items-center flex flex-col gap-4">
+                    <nav className="h-full items-center flex flex-col gap-6">
                         { tabs.map(tab => (
                             <Link to={tab.path} key={tab.name} className="relative">
                                 {tab.icon}
