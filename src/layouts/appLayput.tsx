@@ -12,7 +12,7 @@ export function AppLayout() {
     const currentTab = tabs.find((tab) => tab.path === location.pathname);
 
     return (
-        <div className="flex flex-col h-screen w-screen bg-chrome text-text">
+        <div className="flex flex-col h-screen w-screen bg-chrome text-primary">
             <header data-tauri-drag-region className="flex h-10 items-center justify-between px-4">
                 <div className="flex items-center gap-2">
                     <div className="w-14"/>
