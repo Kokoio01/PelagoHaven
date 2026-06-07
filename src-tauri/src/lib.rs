@@ -1,5 +1,5 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder, LogicalPosition};
+use tauri::{LogicalPosition, TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -9,15 +9,19 @@ fn greet(name: &str) -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let mut win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("")
-                .inner_size(800.0, 600.0);
+                .inner_size(800.0, 600.0)
+                .min_inner_size(800.0, 600.0);
+
 
             #[cfg(target_os = "macos")]
             {
                 win_builder = win_builder.title_bar_style(TitleBarStyle::Overlay);
-                win_builder = win_builder.traffic_light_position(LogicalPosition {y:22, x:10})
+                win_builder = win_builder.traffic_light_position(LogicalPosition { y: 22, x: 10 })
             }
 
             let _window = win_builder.build().unwrap();

@@ -23,14 +23,14 @@ export function AppLayout() {
                 <aside className="h-full p-4 w-16">
                     <nav className="h-full items-center flex flex-col gap-6">
                         { tabs.map(tab => (
-                            <Link to={tab.path} key={tab.name} className="relative">
+                            <Link to={tab.path} key={tab.name} className="relative transition active:scale-95 duration-150">
                                 {tab.icon}
                                 { currentTab?.name === tab.name ? <div className="absolute bg-accent w-2 top-0 bottom-1 right-10 rounded-r-4xl" /> : undefined}
                             </Link>
                         ))}
                     </nav>
                 </aside>
-                <div className="rounded-tl-2xl bg-background text-amber-50 overflow-y-auto w-full p-4">
+                <div className="rounded-tl-2xl bg-background text-amber-50 overflow-y-auto w-full p-6">
                     <Outlet/>
                 </div>
             </div>
