@@ -1,7 +1,7 @@
 import {load, Store} from "@tauri-apps/plugin-store";
 
-type ConfigTypes = {
-    "archipelago:path": string;
+export type ConfigTypes = {
+    "archipelago:windows:path": string;
 }
 
 export type ConfigKeys = keyof ConfigTypes;
@@ -19,9 +19,7 @@ class AppStore {
             this.store = await load(this.filename, {
                 createNew: false,
                 defaults: {},
-                deserializeFnName: "",
                 overrideDefaults: false,
-                serializeFnName: "",
                 autoSave: 1
             });
         }

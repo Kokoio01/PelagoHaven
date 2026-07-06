@@ -18,13 +18,14 @@ export default function Settings() {
                 <h2 className="font-bold text-3xl pl-6.5">{tab.title}</h2>
             </div>
             <div className="flex gap-4 h-full">
-                <aside className="flex flex-col  min-w-1/4">
+                <aside className="flex flex-col min-w-1/4">
                     { tabs.map(tab => (
                         <button
                             className={`flex items-center gap-1 p-2 rounded-xl border-2 transition active:scale-95 duration-150 ${
                                 selectedTab === tab.side ? "border-accent text-accent" : "border-transparent hover:bg-muted hover:text-highlight"
                             }`}
                             onClick={() => setSelectedTab(tab.side)}
+                            key={tab.side}
                         >
                             {tab.icon}
                             <span>{tab.side}</span>
@@ -32,7 +33,7 @@ export default function Settings() {
                     ))}
                 </aside>
                 <div className="w-0.5 bg-muted rounded-2xl"/>
-                <div>
+                <div className="flex-1">
                     { tab.element }
                 </div>
             </div>
