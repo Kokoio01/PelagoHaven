@@ -1,5 +1,9 @@
 import {Link, Outlet, useLocation} from "react-router";
-import {HomeIcon, SettingsIcon, ShelvingUnitIcon} from "lucide-react";
+import {HomeIcon, MaximizeIcon, MinimizeIcon, MinusIcon, SettingsIcon, ShelvingUnitIcon, XIcon} from "lucide-react";
+import {platform} from "@tauri-apps/plugin-os";
+import {getCurrentWindow} from "@tauri-apps/api/window";
+import {Button} from "@/components/ui/button.tsx";
+import {useEffect, useState} from "react";
 
 const tabs = [
     { name: "Home", path: "/", icon: <HomeIcon size={28}/> },
@@ -8,16 +12,44 @@ const tabs = [
 ]
 
 export function AppLayout() {
+    const isMacOs = platform() === "macos"
+    const appWindow = getCurrentWindow();
+    const [isMaximised, setIsMaximised] = useState(false)
     const location = useLocation();
     const currentTab = tabs.find((tab) => tab.path === location.pathname);
 
+    useEffect(() => {
+        (async () => {
+            setIsMaximised(await appWindow.isMaximized());
+        })();
+    }, []);
+
+    function toggleMaximize() {
+        appWindow.toggleMaximize()
+        setIsMaximised(!isMaximised)
+    }
+
     return (
         <div className="flex flex-col h-screen w-screen bg-chrome text-primary">
-            <header data-tauri-drag-region className="flex h-10 items-center justify-between px-4">
+            <header data-tauri-drag-region className="flex h-10 items-center justify-between px-2">
                 <div className="flex items-center gap-2">
-                    <div className="w-14"/>
+                    {isMacOs ? <div className="w-14"/> : <div/>}
                     <h1 className="text-lg font-sans">PelagoHaven</h1>
                 </div>
+                {!isMacOs ?
+                    <div className="flex">
+                        <Button size="icon-lg" variant="ghost" onClick={() => appWindow.minimize()}>
+                            <MinusIcon/>
+                        </Button>
+                        <Button size="icon-lg" variant="ghost" onClick={toggleMaximize}>
+                            {isMaximised ? <MinimizeIcon/> : <MaximizeIcon/>}
+                        </Button>
+                        <Button size="icon-lg" variant="ghost" onClick={() => appWindow.close()}>
+                            <XIcon/>
+                        </Button>
+                    </div> : <div/>
+                }
+
             </header>
             <div className="flex flex-1 flex-row min-w-0">
                 <aside className="h-full p-4 w-16">
