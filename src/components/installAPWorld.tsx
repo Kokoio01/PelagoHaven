@@ -31,7 +31,11 @@ function extractPaths(payload: unknown): string[] {
     return [];
 }
 
-export function InstallAPWorld() {
+type InstallAPWorldProps = {
+    onInstall: () => void;
+};
+
+export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const [file, setFile] = useState<string | null>(null)
@@ -124,7 +128,10 @@ export function InstallAPWorld() {
         setInstalling(true)
 
         invoke<Boolean>("install_world", {path: file})
-            .then(() => setDialogOpen(false))
+            .then(() => {
+                onInstall()
+                setDialogOpen(false)
+            })
             .catch((err) => {
                 setInstalling(false)
                 setError(err)

@@ -52,7 +52,7 @@ export default function Library() {
                         <p>{filtered.length} Results</p>
                     </InputGroupAddon>
                 </InputGroup>
-                <InstallAPWorld/>
+                <InstallAPWorld onInstall={loadWorlds}/>
             </div>
             <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-2 gap-5">
