@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -27,6 +28,12 @@ pub struct ApWorld {
     pub official: bool,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AnalyzeResult {
+    pub manifest: Option<ApWorldManifest>,
+    pub errors: Option<Vec<String>>,
+}
+
 #[tauri::command]
 pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
     let store = app_handle
@@ -45,8 +52,8 @@ pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
     let custom_worlds_dir = Path::new(archipelago_path).join("custom_worlds");
 
     let mut worlds: Vec<ApWorld> = Vec::new();
-    let entries = std::fs::read_dir(worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
-    let custom_entries = std::fs::read_dir(custom_worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
+    let entries = fs::read_dir(worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
+    let custom_entries = fs::read_dir(custom_worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
     for entry in entries {
         if let Ok(entry) = entry {
             let path = entry.path();
@@ -66,7 +73,6 @@ pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
             let path = entry.path();
             if path.is_file() && path.extension().and_then(OsStr::to_str) == Some("apworld") {
                 if let Ok(manifest) = read_manifest(&path) {
-                    println!("{:?}", manifest);
                     worlds.push(ApWorld {
                         manifest,
                         official: false,
@@ -77,6 +83,113 @@ pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
     }
 
     Ok(worlds)
+}
+
+#[tauri::command]
+pub fn analyze_world(path: String) -> Result<AnalyzeResult, String> {
+    let mut errors: Vec<String> = Vec::new();
+    let mut manifest: Option<ApWorldManifest> = None;
+
+    if !path.ends_with(".apworld") {
+        errors.push("File does not end with .apworld".to_string());
+    }
+
+    let file = match File::open(&path) {
+        Ok(f) => f,
+        Err(e) => {
+            errors.push(format!("Failed to open file: {}", e));
+            return Ok(AnalyzeResult { manifest, errors: Some(errors) });
+        }
+    };
+
+    let mut archive = match ZipArchive::new(file) {
+        Ok(a) => a,
+        Err(e) => {
+            errors.push(format!("Failed to read archive: {}", e));
+            return Ok(AnalyzeResult { manifest, errors: Some(errors) });
+        }
+    };
+
+    let mut json_content = String::new();
+    let mut found_manifest = false;
+    let mut found_init = false;
+
+    for i in 0..archive.len() {
+        let mut file = match archive.by_index(i) {
+            Ok(f) => f,
+            Err(e) => {
+                errors.push(format!("Failed to read file at index {}: {}", i, e));
+                continue;
+            }
+        };
+
+        if file.name().ends_with("archipelago.json") {
+            if let Err(e) = file.read_to_string(&mut json_content) {
+                errors.push(format!("Failed to read manifest content: {}", e));
+            } else {
+                found_manifest = true;
+            }
+        }
+
+        if file.name().ends_with("__init__.py") || file.name().ends_with("__init__.pyc") {
+            found_init = true;
+        }
+
+        if found_manifest && found_init {
+            break;
+        }
+    }
+
+    if !found_init {
+        errors.push("Missing __init__.py module file".to_string());
+    }
+
+    if !found_manifest {
+        errors.push("Missing archipelago.json manifest file".to_string());
+    } else {
+        match serde_json::from_str(&json_content) {
+            Ok(parsed) => manifest = Some(parsed),
+            Err(e) => errors.push(format!("Manifest parse error: {}", e)),
+        }
+    }
+
+    let final_errors = if errors.is_empty() {
+        None
+    } else {
+        Some(errors)
+    };
+
+    Ok(AnalyzeResult {
+        manifest,
+        errors: final_errors,
+    })
+}
+
+#[tauri::command]
+pub fn install_world(app_handle: AppHandle, path: String) -> Result<bool, String> {
+    let src_path = Path::new(&path);
+
+    let file_name = src_path
+        .file_name()
+        .ok_or_else(|| "Invalid source file path (no filename found).".to_string())?;
+
+    let store = app_handle
+        .store("config.json")
+        .map_err(|e| format!("Failed to access config store: {}", e))?;
+
+    let archipelago_path_val = store
+        .get("archipelago:windows:path")
+        .ok_or("Archipelago path is not configured in settings.")?;
+
+    let archipelago_path = archipelago_path_val
+        .as_str()
+        .ok_or("Configured path is not a valid string.")?;
+
+    let worlds_dir = Path::new(archipelago_path).join("custom_worlds");
+    let dest_file_path = worlds_dir.join(file_name);
+
+    fs::copy(path, dest_file_path).map_err(|e| format!("Failed to copy: {}", e))?;
+    Ok(true)
 }
 
 pub fn read_manifest(path: &Path) -> Result<ApWorldManifest, Box<dyn std::error::Error>> {
@@ -99,7 +212,6 @@ pub fn read_manifest(path: &Path) -> Result<ApWorldManifest, Box<dyn std::error:
         println!("ERROR: No archipelago.json file found");
     }
 
-    println!("{}", json);
     let manifest: ApWorldManifest = serde_json::from_str(&json)?;
     Ok(manifest)
 }

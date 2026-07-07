@@ -13,7 +13,8 @@ pub fn run() {
             let mut win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("")
                 .inner_size(1000.0, 600.0)
-                .min_inner_size(1000.0, 600.0);
+                .min_inner_size(1000.0, 600.0)
+                .drag_and_drop(true);
 
             #[cfg(target_os = "macos")]
             {
@@ -36,6 +37,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::world::get_worlds,
+            commands::world::analyze_world,
+            commands::world::install_world
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

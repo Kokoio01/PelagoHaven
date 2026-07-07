@@ -1,20 +1,10 @@
 import {useEffect, useState} from "react";
 import {invoke} from "@tauri-apps/api/core";
-import {Button} from "@/components/ui/button.tsx";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "@/components/ui/input-group.tsx";
-import {BadgeCheckIcon, PlusIcon, SearchIcon} from "lucide-react";
+import {BadgeCheckIcon, SearchIcon} from "lucide-react";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
-
-interface APWorld {
-    game?: string,
-    version?: number,
-    compatible_version?: number,
-    world_version?: string,
-    minimum_ap_version?: string,
-    maximum_ap_version?: string,
-    authors?: string[],
-    official: boolean,
-}
+import {InstallAPWorld} from "@/components/installAPWorld.tsx";
+import {APWorld} from "@/types/worlds.ts";
 
 export default function Library() {
     const [worlds, setWorlds] = useState<APWorld[]>([])
@@ -29,7 +19,7 @@ export default function Library() {
 
     useEffect(() => {
         setFiltered(
-            worlds.filter((world) => world.game.toLowerCase().startsWith(search.toLowerCase()))
+            worlds.filter((world) => world.game?.toLowerCase().startsWith(search.toLowerCase()))
         )
     }, [search, worlds]);
 
@@ -49,13 +39,7 @@ export default function Library() {
                         <p>{filtered.length} Results</p>
                     </InputGroupAddon>
                 </InputGroup>
-                <Button
-                    className="bg-accent hover:bg-accent-muted"
-                    onClick={loadWorlds}
-                >
-                    <PlusIcon/>
-                    <p>Add APWorld</p>
-                </Button>
+                <InstallAPWorld/>
             </div>
             <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-2 gap-5">
