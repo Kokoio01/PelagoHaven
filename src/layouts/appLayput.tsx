@@ -51,7 +51,7 @@ export function AppLayout() {
                 }
 
             </header>
-            <div className="flex flex-1 flex-row min-w-0">
+            <div className="flex flex-1 flex-row min-w-0 overflow-hidden">
                 <aside className="h-full p-4 w-16">
                     <nav className="h-full items-center flex flex-col gap-6">
                         { tabs.map(tab => (
@@ -62,7 +62,7 @@ export function AppLayout() {
                         ))}
                     </nav>
                 </aside>
-                <div className="rounded-tl-2xl bg-background text-amber-50 overflow-y-auto w-full p-6">
+                <div className="rounded-tl-2xl bg-background text-amber-50 overflow-hidden flex flex-col h-full w-full min-h-0 p-6">
                     <Outlet/>
                 </div>
             </div>

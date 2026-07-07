@@ -1,10 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use tauri::{LogicalPosition, TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
+pub mod commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -15,8 +12,8 @@ pub fn run() {
         .setup(|app| {
             let mut win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("")
-                .inner_size(800.0, 600.0)
-                .min_inner_size(800.0, 600.0);
+                .inner_size(1000.0, 600.0)
+                .min_inner_size(1000.0, 600.0);
 
             #[cfg(target_os = "macos")]
             {
@@ -37,7 +34,9 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            commands::world::get_worlds,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
