@@ -35,7 +35,9 @@ export default function Library() {
             });
     }
 
-    useEffect(() => loadWorlds, [])
+    useEffect(() => {
+        loadWorlds()
+    }, [])
 
     useEffect(() => {
         setFiltered(
