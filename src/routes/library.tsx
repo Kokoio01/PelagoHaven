@@ -11,6 +11,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
+import {
+    AlertDialog,
+    AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle,
+    AlertDialogTrigger
+} from "@/components/ui/alert-dialog.tsx";
 
 export default function Library() {
     const [worlds, setWorlds] = useState<APWorld[]>([])
@@ -70,12 +77,29 @@ export default function Library() {
                                             <EllipsisVerticalIcon/>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
-                                            <DropdownMenuItem
-                                                variant="destructive"
-                                                onClick={() => deleteWorld(world.path)}
-                                            >
-                                                Delete
-                                            </DropdownMenuItem>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem
+                                                        variant="destructive"
+                                                        onSelect={(e) => e.preventDefault()}
+                                                    >
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete this
+                                                            world.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => deleteWorld(world.path)}>Continue</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </DropdownMenuContent>
                                     </DropdownMenu> : undefined
                                 }
