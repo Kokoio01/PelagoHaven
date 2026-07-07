@@ -98,6 +98,9 @@ export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
         if (!open) {
             setAnalysis(null)
             setFile(null)
+            setInstalling(false)
+            setError("")
+            setIsDragging(false)
         }
     }
 
