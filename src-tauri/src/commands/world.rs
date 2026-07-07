@@ -25,6 +25,7 @@ pub struct ApWorldManifest {
 pub struct ApWorld {
     #[serde(flatten)]
     pub manifest: ApWorldManifest,
+    pub path: String,
     pub official: bool,
 }
 
@@ -61,6 +62,7 @@ pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
                 if let Ok(manifest) = read_manifest(&path) {
                     worlds.push(ApWorld {
                         manifest,
+                        path: path.to_str().unwrap().to_string(),
                         official: true,
                     });
                 }
@@ -75,6 +77,7 @@ pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
                 if let Ok(manifest) = read_manifest(&path) {
                     worlds.push(ApWorld {
                         manifest,
+                        path: path.to_str().unwrap().to_string(),
                         official: false,
                     });
                 }
@@ -189,6 +192,16 @@ pub fn install_world(app_handle: AppHandle, path: String) -> Result<bool, String
     let dest_file_path = worlds_dir.join(file_name);
 
     fs::copy(path, dest_file_path).map_err(|e| format!("Failed to copy: {}", e))?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub fn uninstall_world(path: String) -> Result<bool, String> {
+    if !path.ends_with(".apworld") {
+        return Err("File does not end with .apworld".to_string());
+    }
+
+    fs::remove_file(path).map_err(|e| format!("Failed to delete file: {}", e))?;
     Ok(true)
 }
 

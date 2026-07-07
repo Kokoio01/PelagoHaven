@@ -17,6 +17,7 @@ export interface APWorld {
     maximum_ap_version?: string,
     authors?: string[],
     official: boolean,
+    path: string,
 }
 
 export interface WorldAnalysis {

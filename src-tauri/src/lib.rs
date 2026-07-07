@@ -38,7 +38,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::world::get_worlds,
             commands::world::analyze_world,
-            commands::world::install_world
+            commands::world::install_world,
+            commands::world::uninstall_world,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

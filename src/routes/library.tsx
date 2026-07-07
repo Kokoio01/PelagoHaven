@@ -1,10 +1,16 @@
 import {useEffect, useState} from "react";
 import {invoke} from "@tauri-apps/api/core";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "@/components/ui/input-group.tsx";
-import {BadgeCheckIcon, SearchIcon} from "lucide-react";
+import {BadgeCheckIcon, EllipsisVerticalIcon, SearchIcon} from "lucide-react";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 import {InstallAPWorld} from "@/components/installAPWorld.tsx";
 import {APWorld} from "@/types/worlds.ts";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu.tsx";
 
 export default function Library() {
     const [worlds, setWorlds] = useState<APWorld[]>([])
@@ -13,6 +19,13 @@ export default function Library() {
 
     function loadWorlds() {
         invoke<APWorld[]>("get_worlds").then((message) => setWorlds(message))
+    }
+
+    function deleteWorld(path:string) {
+        invoke<Boolean>("uninstall_world", {path: path})
+            .then(() => {
+                setWorlds(worlds.filter((world) => world.path !== path));
+            });
     }
 
     useEffect(() => loadWorlds, [])
@@ -49,7 +62,24 @@ export default function Library() {
                                 {world.game}
                                 {world.official ? <BadgeCheckIcon size={18} className="text-accent"/> : <p/>
                             }</p>
-                            <p>{world.world_version}</p>
+                            <div className="flex gap-3">
+                                <p>{world.world_version}</p>
+                                {!world.official ?
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <EllipsisVerticalIcon/>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem
+                                                variant="destructive"
+                                                onClick={() => deleteWorld(world.path)}
+                                            >
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu> : undefined
+                                }
+                            </div>
                         </div>
                         <p>{world.authors?.join(", ")}</p>
                     </div>)}
