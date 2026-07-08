@@ -1,9 +1,11 @@
-import {Link, Outlet, useLocation} from "react-router";
+import {Link, Outlet, useLocation, useNavigate} from "react-router";
 import {HomeIcon, MaximizeIcon, MinimizeIcon, MinusIcon, SettingsIcon, ShelvingUnitIcon, XIcon} from "lucide-react";
 import {platform} from "@tauri-apps/plugin-os";
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import {Button} from "@/components/ui/button.tsx";
 import {useEffect, useState} from "react";
+import {listen} from "@tauri-apps/api/event";
+import {invoke} from "@tauri-apps/api/core";
 
 const tabs = [
     { name: "Home", path: "/", icon: <HomeIcon size={28}/> },
@@ -16,13 +18,38 @@ export function AppLayout() {
     const appWindow = getCurrentWindow();
     const [isMaximised, setIsMaximised] = useState(false)
     const location = useLocation();
+    const navigate = useNavigate()
     const currentTab = tabs.find((tab) => tab.path === location.pathname);
+    const [filePath, setFilePath] = useState("")
 
     useEffect(() => {
         (async () => {
             setIsMaximised(await appWindow.isMaximized());
         })();
     }, []);
+
+    useEffect(() => {
+        const unlisten = listen<string[]>("file-open", (event) => {
+            handleFile(event.payload[1]);
+        })
+
+        invoke<string | null>("get_opened_file")
+            .then((file) => {if (file) handleFile(file)})
+            .catch((err) => console.error("Error loading File: " + err))
+
+        return () => {
+            unlisten.then((f) => f());
+        };
+    }, [navigate, location]);
+
+    function handleFile(path: string) {
+        if (path && path.endsWith(".apworld")) {
+            setFilePath(path);
+            if (location.pathname !== "/library") {
+                navigate("/library");
+            }
+        }
+    }
 
     function toggleMaximize() {
         appWindow.toggleMaximize()
@@ -63,7 +90,7 @@ export function AppLayout() {
                     </nav>
                 </aside>
                 <div className="rounded-tl-2xl bg-background text-amber-50 overflow-hidden flex flex-col h-full w-full min-h-0 p-6">
-                    <Outlet/>
+                    <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
                 </div>
             </div>
         </div>

@@ -33,9 +33,11 @@ function extractPaths(payload: unknown): string[] {
 
 type InstallAPWorldProps = {
     onInstall: () => void;
+    onClose: () => void;
+    presetFile: string;
 };
 
-export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
+export function InstallAPWorld({onInstall, onClose, presetFile}: InstallAPWorldProps) {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const [file, setFile] = useState<string | null>(null)
@@ -87,6 +89,13 @@ export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
     }, []);
 
     useEffect(() => {
+        if (presetFile) {
+            setFile(presetFile);
+            setDialogOpen(true);
+        }
+    }, [presetFile]);
+
+    useEffect(() => {
         if (!file) return;
         invoke<WorldAnalysis>("analyze_world", {path: file})
             .then((value) => setAnalysis(value))
@@ -101,6 +110,7 @@ export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
             setInstalling(false)
             setError("")
             setIsDragging(false)
+            onClose()
         }
     }
 
@@ -133,6 +143,13 @@ export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
         invoke<Boolean>("install_world", {path: file})
             .then(() => {
                 onInstall()
+
+                setAnalysis(null)
+                setFile(null)
+                setInstalling(false)
+                setError("")
+                setIsDragging(false)
+
                 setDialogOpen(false)
             })
             .catch((err) => {
@@ -247,7 +264,10 @@ export function InstallAPWorld({onInstall}: InstallAPWorldProps) {
                                 className="w-full"
                                 disabled={(analysis?.errors?.length || 0) >= 1 || !file || !analysis}
                                 variant={error ? "destructive" : "default"}
-                                onClick={installWorld}
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    installWorld()
+                                }}
                             >
                                 {error ?
                                     <>

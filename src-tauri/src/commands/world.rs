@@ -1,12 +1,12 @@
+use serde::Serialize;
+use serde::{Deserialize, Deserializer};
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use serde::{Deserialize, Deserializer};
-use serde::Serialize;
 use tauri::AppHandle;
-use tauri_plugin_store::{StoreExt};
+use tauri_plugin_store::StoreExt;
 use zip::ZipArchive;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -53,8 +53,10 @@ pub fn get_worlds(app_handle: AppHandle) -> Result<Vec<ApWorld>, String> {
     let custom_worlds_dir = Path::new(archipelago_path).join("custom_worlds");
 
     let mut worlds: Vec<ApWorld> = Vec::new();
-    let entries = fs::read_dir(worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
-    let custom_entries = fs::read_dir(custom_worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
+    let entries =
+        fs::read_dir(worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
+    let custom_entries =
+        fs::read_dir(custom_worlds_dir).map_err(|e| format!("Failed to read directory: {}", e))?;
     for entry in entries {
         if let Ok(entry) = entry {
             let path = entry.path();
@@ -101,7 +103,10 @@ pub fn analyze_world(path: String) -> Result<AnalyzeResult, String> {
         Ok(f) => f,
         Err(e) => {
             errors.push(format!("Failed to open file: {}", e));
-            return Ok(AnalyzeResult { manifest, errors: Some(errors) });
+            return Ok(AnalyzeResult {
+                manifest,
+                errors: Some(errors),
+            });
         }
     };
 
@@ -109,7 +114,10 @@ pub fn analyze_world(path: String) -> Result<AnalyzeResult, String> {
         Ok(a) => a,
         Err(e) => {
             errors.push(format!("Failed to read archive: {}", e));
-            return Ok(AnalyzeResult { manifest, errors: Some(errors) });
+            return Ok(AnalyzeResult {
+                manifest,
+                errors: Some(errors),
+            });
         }
     };
 
@@ -206,7 +214,7 @@ pub fn uninstall_world(path: String) -> Result<bool, String> {
 }
 
 pub fn read_manifest(path: &Path) -> Result<ApWorldManifest, Box<dyn std::error::Error>> {
-   let file = File::open(path)?;
+    let file = File::open(path)?;
     let mut archive = ZipArchive::new(file)?;
 
     let mut json = String::new();

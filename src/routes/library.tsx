@@ -18,11 +18,18 @@ import {
     AlertDialogHeader, AlertDialogTitle,
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog.tsx";
+import {useOutletContext} from "react-router";
+
+type LayoutContextType = {
+    filePath: string;
+    clearFile: () => void
+}
 
 export default function Library() {
     const [worlds, setWorlds] = useState<APWorld[]>([])
     const [search, setSearch] = useState("")
     const [filtered, setFiltered] = useState<APWorld[]>([])
+    const { filePath, clearFile } = useOutletContext<LayoutContextType>()
 
     function loadWorlds() {
         invoke<APWorld[]>("get_worlds").then((message) => setWorlds(message))
@@ -61,7 +68,7 @@ export default function Library() {
                         <p>{filtered.length} Results</p>
                     </InputGroupAddon>
                 </InputGroup>
-                <InstallAPWorld onInstall={loadWorlds}/>
+                <InstallAPWorld onInstall={loadWorlds} onClose={clearFile} presetFile={filePath}/>
             </div>
             <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-2 gap-5">
