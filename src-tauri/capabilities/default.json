@@ -15,6 +15,17 @@
     "core:window:allow-toggle-maximize",
     "dialog:default",
     "store:default",
-    "os:default"
+    "os:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/ap-helper",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    },
+    "shell:default"
   ]
 }

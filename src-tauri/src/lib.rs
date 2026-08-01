@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-use tauri::{Emitter, LogicalPosition, Manager, State, TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 use std::sync::Mutex;
+use tauri::{
+    Emitter, LogicalPosition, Manager, State, TitleBarStyle, WebviewUrl, WebviewWindowBuilder,
+};
 
 pub mod commands;
 
@@ -15,6 +17,7 @@ async fn get_opened_file(state: State<'_, OpenedFile>) -> Result<Option<String>,
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if let Some(main_window) = app.get_webview_window("main") {
                 let _ = app.emit("file-open", &args);
@@ -63,6 +66,7 @@ pub fn run() {
             commands::world::analyze_world,
             commands::world::install_world,
             commands::world::uninstall_world,
+            commands::python::get_game_options
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
