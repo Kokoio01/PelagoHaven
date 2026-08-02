@@ -1,5 +1,14 @@
 import {Link, Outlet, useLocation, useNavigate} from "react-router";
-import {HomeIcon, MaximizeIcon, MinimizeIcon, MinusIcon, SettingsIcon, ShelvingUnitIcon, XIcon} from "lucide-react";
+import {
+    HomeIcon,
+    MaximizeIcon,
+    MinimizeIcon,
+    MinusIcon,
+    PlusIcon,
+    SettingsIcon,
+    ShelvingUnitIcon,
+    XIcon
+} from "lucide-react";
 import {platform} from "@tauri-apps/plugin-os";
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import {Button} from "@/components/ui/button.tsx";
@@ -10,7 +19,8 @@ import {invoke} from "@tauri-apps/api/core";
 const tabs = [
     { name: "Home", path: "/", icon: <HomeIcon size={28}/> },
     { name: "Library", path: "/library", icon: <ShelvingUnitIcon size={28}/>},
-    { name: "Settings", path: "/settings", icon: <SettingsIcon size={28}/>}
+    { name: "Settings", path: "/settings", icon: <SettingsIcon size={28}/>},
+    { name: "Generate", path: "/generate", icon: <PlusIcon size={28}/>},
 ]
 
 export function AppLayout() {

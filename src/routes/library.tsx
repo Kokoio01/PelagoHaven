@@ -54,7 +54,7 @@ export default function Library() {
 
     return (
         <main className="flex flex-col flex-1 h-full min-h-0 gap-4">
-            <div className="flex gap-4 ">
+            <div className="flex gap-4">
                 <InputGroup>
                     <InputGroupAddon>
                         <SearchIcon/>
