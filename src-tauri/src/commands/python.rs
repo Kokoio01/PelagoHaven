@@ -8,8 +8,7 @@ use tauri_plugin_shell::ShellExt;
 struct ApiResponse {
     success: bool,
     game: Option<String>,
-    groups: Option<HashMap<String, Vec<String>>>,
-    options: Option<HashMap<String, Value>>,
+    options: Option<Value>,
     error: Option<String>,
 }
 

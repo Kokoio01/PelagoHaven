@@ -113,21 +113,47 @@ def get_options(game_name):
 
     options_dataclass = world_cls.options_dataclass
 
-    groups = {}
-    if hasattr(world_cls, "web") and hasattr(world_cls.web, "option_groups"):
-        for group in world_cls.web.option_groups:
-            groups[group.name] = [opt.internal_name for opt in group.options if hasattr(opt, "internal_name")]
+    class_to_name = {}
+    for opt_name, opt_cls in options_dataclass.type_hints.items():
+        class_to_name[opt_cls] = opt_name
+        class_to_name[opt_name] = opt_name
 
     serialized_options = {}
     for opt_name, opt_cls in options_dataclass.type_hints.items():
         if getattr(opt_cls, "visibility", Visibility.all) & Visibility.simple_ui:
             serialized_options[opt_name] = serialize_option(opt_name, opt_cls)
 
+    groups = {}
+    assigned_options = set()
+    if hasattr(world_cls, "web") and hasattr(world_cls.web, "option_groups"):
+        for group in world_cls.web.option_groups:
+            group_options = []
+            for opt in group.options:
+                # Convert Option class object or string into the dataclass field name
+                opt_name = class_to_name.get(opt, getattr(opt, "internal_name", str(opt)))
+                group_options.append(opt_name)
+
+            groups[group.name] = group_options
+            assigned_options.update(group_options)
+
+    ungrouped_options = [
+        name for name in serialized_options.keys()
+        if name not in assigned_options
+    ]
+
+    if ungrouped_options:
+        groups = {"General": ungrouped_options, **groups}
+
+    grouped_options = {}
+    for group_name, group_options in groups.items():
+        options = [serialized_options[key] for key in group_options if key in serialized_options]
+        if options:
+            grouped_options[group_name] = options
+
     return {
         "success": True,
         "game": game_name,
-        "groups": groups,
-        "options": serialized_options
+        "options": grouped_options
     }
 
 def json_serial(obj):

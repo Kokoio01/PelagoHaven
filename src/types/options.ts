@@ -44,7 +44,7 @@ export interface ChoiceOption extends BaseOption {
 
 export interface TextChoiceOption extends BaseOption {
     type: 'text_choice',
-    options: Record<string, number>,
+    options: Record<string, string>,
     default: string | number
 }
 
@@ -76,8 +76,7 @@ export type Options =
 export interface SuccessResponse {
     success: true,
     game: string
-    groups: Record<string, string[]>,
-    options: Record<string, Options>
+    options: Record<string, Options[]>
 }
 
 export interface ErrorResponse {

@@ -13,14 +13,6 @@ type Slot = {
     path?: string
 }
 
-export interface ApiResponse {
-    success: boolean;
-    game?: string;
-    groups?: Record<string, string[]>;
-    options?: Record<string, unknown>;
-    error?: string;
-}
-
 const slots:Slot[] = [
     {id: 1, name: "player1", game: "Hollow Knight", path: "C:/ProgramData/Archipelago/lib/worlds/factorio.apworld"},
     {id: 2, name: "player2", game: "Hollow Knight"},
@@ -38,12 +30,12 @@ const slots:Slot[] = [
 export default function Generate() {
     const [selected, setSelected] = useState(1)
     const [currentSlot, setCurrentSlot] = useState<Slot | undefined>()
-    const [options, setOptions] = useState<ApiResponse | undefined>()
+    const [options, setOptions] = useState<Response | undefined>()
 
     useEffect(() => {
         const newSlot = slots.find((s) => s.id === selected)
         setCurrentSlot(undefined)
-        invoke<ApiResponse>("get_game_options", { gameName: currentSlot?.path })
+        invoke<Response>("get_game_options", { gameName: currentSlot?.path })
             .then((message) => {
                 console.log(message)
                 setOptions(message);
