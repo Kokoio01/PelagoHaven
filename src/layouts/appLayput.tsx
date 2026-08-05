@@ -15,6 +15,7 @@ import {Button} from "@/components/ui/button.tsx";
 import {useEffect, useState} from "react";
 import {listen} from "@tauri-apps/api/event";
 import {invoke} from "@tauri-apps/api/core";
+import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 
 const tabs = [
     { name: "Home", path: "/", icon: <HomeIcon size={28}/> },
@@ -22,6 +23,8 @@ const tabs = [
     { name: "Settings", path: "/settings", icon: <SettingsIcon size={28}/>},
     { name: "Generate", path: "/generate", icon: <PlusIcon size={28}/>},
 ]
+
+const queryClient = new QueryClient()
 
 export function AppLayout() {
     const isMacOs = platform() === "macos"
@@ -100,7 +103,9 @@ export function AppLayout() {
                     </nav>
                 </aside>
                 <div className="rounded-tl-2xl bg-background text-amber-50 overflow-hidden flex flex-col h-full w-full min-h-0 p-6">
-                    <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
+                    <QueryClientProvider client={queryClient}>
+                        <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
+                    </QueryClientProvider>
                 </div>
             </div>
         </div>

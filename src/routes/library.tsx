@@ -19,6 +19,7 @@ import {
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog.tsx";
 import {useOutletContext} from "react-router";
+import {useWorlds} from "@/hooks/useWorlds.ts";
 
 type LayoutContextType = {
     filePath: string;
@@ -26,29 +27,19 @@ type LayoutContextType = {
 }
 
 export default function Library() {
-    const [worlds, setWorlds] = useState<APWorld[]>([])
+    const { data: worlds, refetch } = useWorlds();
     const [search, setSearch] = useState("")
     const [filtered, setFiltered] = useState<APWorld[]>([])
     const { filePath, clearFile } = useOutletContext<LayoutContextType>()
 
-    function loadWorlds() {
-        invoke<APWorld[]>("get_worlds").then((message) => setWorlds(message))
-    }
-
     function deleteWorld(path:string) {
         invoke<Boolean>("uninstall_world", {path: path})
-            .then(() => {
-                setWorlds(worlds.filter((world) => world.path !== path));
-            });
+            .then(() => refetch());
     }
-
-    useEffect(() => {
-        loadWorlds()
-    }, [])
 
     useEffect(() => {
         setFiltered(
-            worlds.filter((world) => world.game?.toLowerCase().startsWith(search.toLowerCase()))
+            worlds?.filter((world) => world.game?.toLowerCase().startsWith(search.toLowerCase())) || []
         )
     }, [search, worlds]);
 
@@ -68,7 +59,7 @@ export default function Library() {
                         <p>{filtered.length} Results</p>
                     </InputGroupAddon>
                 </InputGroup>
-                <InstallAPWorld onInstall={loadWorlds} onClose={clearFile} presetFile={filePath}/>
+                <InstallAPWorld onInstall={() => refetch()} onClose={clearFile} presetFile={filePath}/>
             </div>
             <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-2 gap-5">
