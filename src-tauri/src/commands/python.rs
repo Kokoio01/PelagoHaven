@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::AppHandle;
 use tauri_plugin_shell::ShellExt;
 
 #[derive(Deserialize, Serialize)]
-struct ApiResponse {
+pub struct ApiResponse {
     success: bool,
     game: Option<String>,
     options: Option<Value>,
@@ -13,7 +12,7 @@ struct ApiResponse {
 }
 
 #[tauri::command]
-pub async fn get_game_options(app: AppHandle, game_name: String) -> Result<serde_json::Value, String> {
+pub async fn get_game_options(app: AppHandle, game_name: String) -> Result<ApiResponse, String> {
     println!("get_game_options");
     let output = app
         .shell()
@@ -34,5 +33,5 @@ pub async fn get_game_options(app: AppHandle, game_name: String) -> Result<serde
         return Err(parsed.error.unwrap_or_else(|| "Unknown error".into()));
     }
 
-    Ok(serde_json::to_value(parsed.options.unwrap_or_default()).map_err(|e| e.to_string())?)
+    Ok(parsed)
 }

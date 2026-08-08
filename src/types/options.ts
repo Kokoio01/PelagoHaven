@@ -56,7 +56,7 @@ export interface FreeTextOption extends BaseOption {
 export interface ListOption extends BaseOption {
     type: 'list',
     valid_keys: string[],
-    default: string[] | Record<string, unknown> | unknown
+    default: string[]
 }
 
 export interface UnknownOption extends BaseOption {
