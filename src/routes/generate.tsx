@@ -207,7 +207,14 @@ export default function Generate() {
                                                     }
                                                     if (option.type === "range") {
                                                         return <Field key={option.name}>
-                                                            <FieldLabel>{option.display_name}</FieldLabel>
+                                                            <div className="flex justify-between">
+                                                                <FieldLabel>{option.display_name}</FieldLabel>
+                                                                <p className="text-sm leading-none font-medium">
+                                                                    {currentSlot.values?.[option.name] !== undefined
+                                                                    ? [Number(currentSlot.values[option.name])]
+                                                                    : 0}
+                                                                </p>
+                                                            </div>
                                                             <Slider
                                                                 min={option.min}
                                                                 max={option.max}
@@ -221,8 +228,19 @@ export default function Generate() {
                                                         </Field>
                                                     }
                                                     if (option.type === "named_range") {
+                                                        const val = currentSlot.values?.[option.name]
+                                                        const range_name = Object.entries(option.special_range_names).find((e) => e[1] === val)?.[0]
+
                                                         return <Field key={option.name}>
-                                                            <FieldLabel>{option.display_name}</FieldLabel>
+                                                            <div className="flex justify-between">
+                                                                <FieldLabel>{option.display_name}</FieldLabel>
+                                                                <p className="text-sm leading-none font-medium">
+                                                                    {val !== undefined
+                                                                        ? formatChoiceLabel(`${range_name || "Custom"} (${val})`)
+                                                                        : 0
+                                                                    }
+                                                                </p>
+                                                            </div>
                                                             <Slider
                                                                 min={option.min}
                                                                 max={option.max}
