@@ -1,4 +1,11 @@
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from "@/components/ui/dialog.tsx";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from "@/components/ui/dialog.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@/components/ui/input-group.tsx";
 import {PlusIcon, TrashIcon} from "lucide-react";
@@ -7,11 +14,12 @@ import {useState} from "react";
 type ListOptionProps = {
     id: string,
     name: string,
+    description: string,
     items: string[],
     onEdit: (optionName: string, newValue: string[]) => void,
 }
 
-export function ListOption({id, name, items = [], onEdit}: ListOptionProps) {
+export function ListOption({id, name, description, items = [], onEdit}: ListOptionProps) {
     const [input, setInput] = useState("");
 
     const handleAdd = () => {
@@ -32,6 +40,7 @@ export function ListOption({id, name, items = [], onEdit}: ListOptionProps) {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Editing List "{name}"</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <InputGroup>
                     <InputGroupInput

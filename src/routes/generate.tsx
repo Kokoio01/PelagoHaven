@@ -176,6 +176,7 @@ export default function Generate() {
                                     <Input
                                         className="h-10"
                                         value={currentSlot.name}
+                                        onChange={(e) => updateSlot(currentSlot?.id, {name: e.target.value})}
                                     ></Input>
                                     <Button
                                         variant="outline"
@@ -196,7 +197,7 @@ export default function Generate() {
                                                 <FieldLegend>{groupName}</FieldLegend>
                                                 {groupOptions.map((option) => {
                                                     if (option.type === "toggle") {
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
                                                             <Switch
                                                                 checked={(currentSlot.values?.[option.name].valueOf()) == true}
@@ -205,7 +206,7 @@ export default function Generate() {
                                                         </Field>
                                                     }
                                                     if (option.type === "range") {
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
                                                             <Slider
                                                                 min={option.min}
@@ -220,7 +221,7 @@ export default function Generate() {
                                                         </Field>
                                                     }
                                                     if (option.type === "named_range") {
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
                                                             <Slider
                                                                 min={option.min}
@@ -262,7 +263,7 @@ export default function Generate() {
                                                             items.find((item) => item.indexStr === strRawVal) ||
                                                             items[0];
 
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
                                                             <Select
                                                                 value={selectedItem?.selectValue ?? ""}
@@ -292,9 +293,9 @@ export default function Generate() {
                                                             ? option.options.map((v) => String(v))
                                                             : Object.values(option.options || {}).map((v) => String(v));
 
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
-                                                            <Combobox items={suggestions} value={strRawVal} onValueChange={(v) => updateOptionValue(option.name, v)}>
+                                                            <Combobox items={suggestions} value={strRawVal} onValueChange={(v) => updateOptionValue(option.name, v || "")}>
                                                                 <ComboboxInput/>
                                                                 <ComboboxContent>
                                                                     <ComboboxEmpty>No items found.</ComboboxEmpty>
@@ -310,7 +311,7 @@ export default function Generate() {
                                                         </Field>
                                                     }
                                                     if (option.type === "text") {
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
                                                             <Input
                                                                 value={String(currentSlot.values?.[option.name].valueOf())}
@@ -322,9 +323,9 @@ export default function Generate() {
                                                         const entries = Array.isArray(currentSlot.values?.[option.name])
                                                             ? currentSlot.values?.[option.name] as string[]
                                                             : []
-                                                        return <Field>
+                                                        return <Field key={option.name}>
                                                             <FieldLabel>{option.display_name}</FieldLabel>
-                                                            <ListOption id={option.name} name={option.display_name} items={entries} onEdit={updateOptionValue} />
+                                                            <ListOption id={option.name} name={option.display_name} description={option.description} items={entries} onEdit={updateOptionValue} />
                                                         </Field>
                                                     }
                                                 })}
