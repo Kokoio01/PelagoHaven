@@ -22,6 +22,7 @@ import {useWorlds} from "@/hooks/useWorlds.ts";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "@/components/ui/input-group.tsx";
 import {APWorld} from "@/types/worlds.ts";
 import { v4 as uuidv4 } from 'uuid';
+import {ListOption} from "@/components/listOption.tsx";
 
 type OptionValue = boolean | number | string | string[] | Record<string, number>;
 
@@ -292,7 +293,13 @@ export default function Generate() {
                                                         </Field>
                                                     }
                                                     if (option.type === "list") {
-                                                        return <p>LIST</p>
+                                                        const entries = Array.isArray(currentSlot.values?.[option.name])
+                                                            ? currentSlot.values?.[option.name] as string[]
+                                                            : []
+                                                        return <Field>
+                                                            <FieldLabel>{option.display_name}</FieldLabel>
+                                                            <ListOption id={option.name} name={option.display_name} items={entries} onEdit={updateOptionValue} />
+                                                        </Field>
                                                     }
                                                 })}
                                             </FieldGroup>
