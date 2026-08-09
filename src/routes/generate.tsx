@@ -23,6 +23,7 @@ import {InputGroup, InputGroupAddon, InputGroupInput} from "@/components/ui/inpu
 import {APWorld} from "@/types/worlds.ts";
 import { v4 as uuidv4 } from 'uuid';
 import {ListOption} from "@/components/listOption.tsx";
+import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from "@/components/ui/combobox.tsx";
 
 type OptionValue = boolean | number | string | string[] | Record<string, number>;
 
@@ -233,7 +234,7 @@ export default function Generate() {
                                                             ></Slider>
                                                         </Field>
                                                     }
-                                                    if (option.type === "choice" || option.type === "text_choice") {
+                                                    if (option.type === "choice") {
                                                         const rawVal = currentSlot.values?.[option.name] ?? option.default;
                                                         const strRawVal = rawVal !== undefined && rawVal !== null ? String(rawVal) : "";
 
@@ -281,6 +282,31 @@ export default function Generate() {
                                                                     </SelectGroup>
                                                                 </SelectContent>
                                                             </Select>
+                                                        </Field>
+                                                    }
+                                                    if (option.type === "text_choice") {
+                                                        const rawVal = currentSlot.values?.[option.name] ?? option.default ?? "";
+                                                        const strRawVal = String(rawVal);
+
+                                                        const suggestions = Array.isArray(option.options)
+                                                            ? option.options.map((v) => String(v))
+                                                            : Object.values(option.options || {}).map((v) => String(v));
+
+                                                        return <Field>
+                                                            <FieldLabel>{option.display_name}</FieldLabel>
+                                                            <Combobox items={suggestions} value={strRawVal} onValueChange={(v) => updateOptionValue(option.name, v)}>
+                                                                <ComboboxInput/>
+                                                                <ComboboxContent>
+                                                                    <ComboboxEmpty>No items found.</ComboboxEmpty>
+                                                                    <ComboboxList>
+                                                                        {(item) => (
+                                                                            <ComboboxItem key={item} value={item}>
+                                                                                {formatChoiceLabel(item)}
+                                                                            </ComboboxItem>
+                                                                        )}
+                                                                    </ComboboxList>
+                                                                </ComboboxContent>
+                                                            </Combobox>
                                                         </Field>
                                                     }
                                                     if (option.type === "text") {
