@@ -30,21 +30,17 @@ pub fn run() {
         .manage(OpenedFile::default())
         .setup(|app| {
             let mut win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
-                .title("")
+                .title("PelagoHaven")
                 .inner_size(1000.0, 600.0)
-                .min_inner_size(1000.0, 600.0)
-                .drag_and_drop(true);
+                .min_inner_size(1000.0, 600.0);
 
             #[cfg(target_os = "macos")]
             {
+                win_builder = win_builder.title("");
                 win_builder = win_builder.title_bar_style(TitleBarStyle::Overlay);
                 win_builder = win_builder.traffic_light_position(LogicalPosition { y: 22, x: 10 })
             }
             #[cfg(target_os = "windows")]
-            {
-                win_builder = win_builder.decorations(false);
-            }
-            #[cfg(target_os = "linux")]
             {
                 win_builder = win_builder.decorations(false);
             }

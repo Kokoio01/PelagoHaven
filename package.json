@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:desktop": "tauri dev",
+    "dev:linux": "GDK_BACKEND=x11 WEBKIT_DISABLE_DMABUF_RENDERER=1 pnpm dev:desktop",
     "build": "tsc && vite build",
     "build:python": "pyinstaller src-python/ap-helper.spec && node scripts/rename-sidecar.js",
     "preview": "vite preview",

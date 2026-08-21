@@ -27,6 +27,7 @@ const tabs = [
 const queryClient = new QueryClient()
 
 export function AppLayout() {
+    const isWindows = platform() === "windows"
     const isMacOs = platform() === "macos"
     const appWindow = getCurrentWindow();
     const [isMaximised, setIsMaximised] = useState(false)
@@ -76,7 +77,7 @@ export function AppLayout() {
                     {isMacOs ? <div className="w-14"/> : <div/>}
                     <h1 className="text-lg font-sans">PelagoHaven</h1>
                 </div>
-                {!isMacOs ?
+                {isWindows ?
                     <div className="flex">
                         <Button size="icon-lg" variant="ghost" onClick={() => appWindow.minimize()}>
                             <MinusIcon/>

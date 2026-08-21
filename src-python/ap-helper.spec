@@ -2,7 +2,7 @@
 from PyInstaller.utils.hooks import collect_submodules
 
 a = Analysis(
-    ['.\\main.py'],
+    ['./main.py'],
     pathex=['./src-archipelago'],
     binaries=[],
     datas=[('src-archipelago', 'src-archipelago')],
@@ -57,14 +57,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name='ap-helper',
 )
