@@ -1,15 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./pages/App.tsx";
 import {HashRouter, Route, Routes} from "react-router";
 import AppLayout from "./layouts/AppLayout.tsx";
+import "./App.css";
+import Setup from "./pages/Setup.tsx";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
       <HashRouter>
           <Routes>
               <Route element={<AppLayout/>}>
-                <Route index element={<App/>}/>
+                <Route index element={<Setup/>}/>
               </Route>
           </Routes>
       </HashRouter>

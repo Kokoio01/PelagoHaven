@@ -1,15 +1,21 @@
 import { useState } from "react";
 import reactLogo from "../assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
-import "../App.css";
+
+type StatusResponse = {
+    status: boolean,
+    python: boolean,
+    core: boolean
+}
+
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
+  const [greetMsg, setGreetMsg] = useState(true);
   const [name, setName] = useState("");
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+    setGreetMsg((await invoke<StatusResponse>("bootstrap_check_status")).status);
   }
 
   return (
@@ -43,7 +49,7 @@ function App() {
         />
         <button type="submit">Greet</button>
       </form>
-      <p>{greetMsg}</p>
+      <p>{String(greetMsg)}</p>
     </main>
   );
 }
