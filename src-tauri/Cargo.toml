@@ -28,6 +28,7 @@ flate2 = "1.0"
 tar = "0.4"
 futures-util = "0.3.34"
 regex = "1.13.1"
+junction = "2.1.0"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

@@ -2,7 +2,7 @@ extern crate alloc;
 
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 
-mod bootstrap;
+mod commands;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -24,9 +24,9 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            bootstrap::bootstrap_check_status,
-            bootstrap::bootstrap_get_ap_versions,
-            bootstrap::bootstrap_install,
+            commands::bootstrap::bootstrap_check_status,
+            commands::bootstrap::bootstrap_get_ap_versions,
+            commands::bootstrap::bootstrap_install,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

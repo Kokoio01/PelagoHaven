@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command};
 use futures_util::StreamExt;
 use reqwest::header::USER_AGENT;
 use serde::{Deserialize, Serialize};
@@ -18,7 +19,7 @@ pub struct StatusResponse {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct APVerison {
+pub struct APVersion {
     name: String,
     tag_name: String,
     prerelease: bool,
@@ -42,7 +43,7 @@ pub fn bootstrap_check_status(app: AppHandle) -> Result<StatusResponse, String> 
 }
 
 #[tauri::command]
-pub async fn bootstrap_get_ap_versions() -> Result<Vec<APVerison>, String> {
+pub async fn bootstrap_get_ap_versions() -> Result<Vec<APVersion>, String> {
     let client = reqwest::Client::new();
     let response = client
         .get("https://api.github.com/repos/ArchipelagoMW/Archipelago/releases")
@@ -51,20 +52,31 @@ pub async fn bootstrap_get_ap_versions() -> Result<Vec<APVerison>, String> {
         .await
         .map_err(|e| e.to_string())?;
 
-    let versions: Vec<APVerison> = response.json().await.map_err(|e| e.to_string())?;
+    let versions: Vec<APVersion> = response.json().await.map_err(|e| e.to_string())?;
     Ok(versions)
 }
 
-fn patch_path(dir: &Path) -> Result<String, String> {
+fn patch_path(dir: &Path, env_versions: &mut HashMap<String, String>) -> Result<String, String> {
     let re = Regex::new(r"git\+https://github\.com/([^/]+)/([^/@]+?)(?:\.git)?@([a-zA-Z0-9_.\-]+)")
+        .map_err(|e| e.to_string())?;
+
+    let re_version = Regex::new(r"^\s*([a-zA-Z0-9_\-]+)\s*@\s*[^#\n]+#([0-9a-zA-Z_.\-+]+)")
         .map_err(|e| e.to_string())?;
     let patch_dir = fs::read_dir(dir).map_err(|e| e.to_string())?;
     for entry in patch_dir.flatten() {
         let path = entry.path();
         if path.is_dir() {
-            patch_path(&path)?;
+            patch_path(&path, env_versions)?;
         } else if path.file_name().map_or(false, |name| name == "requirements.txt") {
             if let Ok(contents) = fs::read_to_string(entry.path()) {
+                for line in contents.lines() {
+                    if let Some(caps) = re_version.captures(line) {
+                        let name = caps[1].to_uppercase().replace('-', "_");
+                        let version = caps[2].to_string();
+                        env_versions.insert(name, version);
+                    }
+                }
+
                 if re.is_match(&contents) {
                     let replaced = re.replace_all(&contents, "https://github.com/$1/$2/archive/$3.tar.gz");
                     fs::write(entry.path(), replaced.as_bytes()).map_err(|e| e.to_string())?;
@@ -79,6 +91,7 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let runtime_dir = dir.join("runtime");
     let core_dir = dir.join("core");
+    let worlds_dir = dir.join("worlds");
 
     let python_exe = runtime_dir.join("python").join("python.exe");
 
@@ -146,7 +159,7 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
 
             archive.unpack(&target).map_err(|e| e.to_string())?;
 
-            let _ = std::fs::remove_file(&source);
+            let _ = fs::remove_file(&source);
             Ok(())
         })
             .await
@@ -215,7 +228,7 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     let target = core_dir.clone();
 
     tokio::task::spawn_blocking(move || -> Result<(), String> {
-        let tar_gz = std::fs::File::open(&source).map_err(|e| e.to_string())?;
+        let tar_gz = File::open(&source).map_err(|e| e.to_string())?;
         let tar = flate2::read::GzDecoder::new(tar_gz);
         let mut archive = tar::Archive::new(tar);
 
@@ -233,7 +246,7 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
             }
         }
 
-        let _ = std::fs::remove_file(&source);
+        let _ = fs::remove_file(&source);
         Ok(())
     })
         .await
@@ -266,16 +279,22 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         percentage: 33.0,
     });
 
-    patch_path(core_dir.as_path()).expect("done");
+    let mut env_versions:HashMap<String,String> = HashMap::new();
+    patch_path(core_dir.as_path(), &mut env_versions).expect("done");
 
     let ap_updater = core_dir.join("ModuleUpdate.py");
-    let _output = Command::new(&python_exe)
-        .current_dir(&core_dir)
+    let mut cmd = Command::new(&python_exe);
+    cmd.current_dir(&core_dir)
         .arg(&ap_updater)
         .arg("--yes")
-        .output()
-        .map_err(|e| e.to_string())?;
+        .env("SETUPTOOLS_SCM_PRETEND_VERSION", "0.1.0");
 
+    for (pkg, version) in env_versions {
+        let key = format!("SETUPTOOLS_SCM_PRETEND_VERSION_FOR_{}", pkg);
+        cmd.env(key, version);
+    }
+
+    let _output = cmd.output().map_err(|e| e.to_string())?;
 
     let _event = on_progress.send(InstallProgress {
         step: "installing_ap".into(),
@@ -315,6 +334,30 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     let _event = on_progress.send(InstallProgress {
         step: "testing_ap".into(),
+        percentage: 100.0,
+    });
+
+    let _event = on_progress.send(InstallProgress {
+        step: "linking_ap".into(),
+        percentage: 0.0,
+    });
+
+    let link_dir = core_dir.join("custom_worlds");
+
+    if !worlds_dir.exists() {
+        fs::create_dir_all(&worlds_dir).map_err(|e| e.to_string())?;
+    }
+
+    if junction::exists(&link_dir).unwrap_or(false) {
+        junction::delete(&link_dir).map_err(|e| e.to_string())?;
+    } else if link_dir.exists() {
+        fs::remove_dir_all(&link_dir).map_err(|e| e.to_string())?;
+    }
+
+    junction::create(worlds_dir, link_dir).map_err(|e| e.to_string())?;
+
+    let _event = on_progress.send(InstallProgress {
+        step: "linking_ap".into(),
         percentage: 100.0,
     });
 
