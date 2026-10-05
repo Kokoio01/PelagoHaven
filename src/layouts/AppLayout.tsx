@@ -6,7 +6,7 @@ import {HugeiconsIcon} from "@hugeicons/react";
 import {
     ArrowLeft02Icon,
     ArrowRight02Icon,
-    Home09Icon,
+    Home09Icon, LibraryIcon,
     MinusIcon,
     Settings05Icon, SquareArrowExpand01Icon, SquareArrowShrink01Icon, XIcon
 } from "@hugeicons/core-free-icons";
@@ -36,10 +36,10 @@ export default function AppLayout() {
     }, [])
 
     return (
-        <div className="bg-stone-900 text-stone100 w-screen h-screen">
+        <div className="bg-stone-900 text-stone100 w-screen h-screen overflow-hidden">
             {(!completedSetup && true) ? <Setup/> :
                 <div className="flex flex-col h-full w-full">
-                    <header data-tauri-drag-region className="flex pl-2.5 pr-1 py-2 justify-between">
+                    <header data-tauri-drag-region className="flex pl-2.5 pr-1 py-2 justify-between shrink-0">
                         <div className="flex items-center gap-4">
                             <h1 className="text-lg font-sans">PelagoHaven</h1>
                             <div className="flex text-stone-400">
@@ -56,16 +56,17 @@ export default function AppLayout() {
                             <HugeiconsIcon icon={XIcon} onClick={() => appWindow.close()}/>
                         </div>
                     </header>
-                    <div className="flex h-full">
-                        <aside className="flex flex-col h-full justify-between p-4">
-                            <div>
+                    <div className="flex flex-1 w-full min-h-0">
+                        <aside className="flex flex-col h-full justify-between p-4 shrink-0">
+                            <div className="flex flex-col items-center gap-4">
                                 <Link to="/"><HugeiconsIcon icon={Home09Icon}/></Link>
+                                <Link to="/library"><HugeiconsIcon icon={LibraryIcon}/></Link>
                             </div>
                             <div>
                                 <Link to="/settings"><HugeiconsIcon icon={Settings05Icon}/></Link>
                             </div>
                         </aside>
-                        <div className="w-full h-full border-l border-t rounded-tl-2xl p-4">
+                        <div className="flex-1 min-w-0 min-h-0 border-l border-t rounded-tl-2xl p-4 overflow-hidden">
                             <Outlet/>
                         </div>
                     </div>

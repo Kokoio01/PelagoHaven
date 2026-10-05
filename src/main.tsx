@@ -4,6 +4,7 @@ import {HashRouter, Route, Routes} from "react-router";
 import AppLayout from "./layouts/AppLayout.tsx";
 import "./App.css";
 import App from "./pages/App.tsx";
+import LibraryPage from "./pages/Library.tsx";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -11,6 +12,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           <Routes>
               <Route element={<AppLayout/>}>
                 <Route index element={<App/>}/>
+                <Route path="library" element={<LibraryPage/>}/>
               </Route>
           </Routes>
       </HashRouter>
