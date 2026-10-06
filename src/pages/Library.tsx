@@ -106,10 +106,12 @@ export default function LibraryPage() {
                                 <AlertDialog>
                                     <AlertDialogTrigger
                                         render={
-                                            <HugeiconsIcon
-                                                icon={TrashIcon}
-                                                className="hover:text-destructive text-stone-50"
-                                            />
+                                            <Button size="icon-lg" variant="ghost">
+                                                <HugeiconsIcon
+                                                    icon={TrashIcon}
+                                                    className="hover:text-destructive text-stone-50"
+                                                />
+                                            </Button>
                                         }
                                     />
                                     <AlertDialogContent>

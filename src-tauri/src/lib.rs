@@ -2,6 +2,7 @@ extern crate alloc;
 
 use std::sync::Mutex;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use crate::functions::worlds::update_worlds;
 
 mod commands;
 mod functions;
@@ -33,6 +34,11 @@ pub fn run() {
 
             app.manage(AppState {
                 conn: Mutex::new(conn)
+            });
+
+            let mut app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let _ = update_worlds(&mut app_handle).await;
             });
 
             Ok(())
