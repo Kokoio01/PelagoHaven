@@ -48,6 +48,8 @@ pub fn run() {
             commands::bootstrap::bootstrap_check_status,
             commands::bootstrap::bootstrap_get_ap_versions,
             commands::bootstrap::bootstrap_install,
+            commands::worlds::worlds_analyze_world,
+            commands::worlds::worlds_install_world,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
