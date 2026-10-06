@@ -1,16 +1,17 @@
+use futures_util::{StreamExt, TryFutureExt};
+use regex::Regex;
+use reqwest::header::USER_AGENT;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::path::Path;
-use std::process::{Command};
-use futures_util::StreamExt;
-use reqwest::header::USER_AGENT;
-use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
-use tauri::ipc::Channel;
-use tokio::io::AsyncWriteExt;
-use regex::Regex;
 use std::os::windows::process::CommandExt;
+use std::path::Path;
+use std::process::Command;
+use tauri::ipc::Channel;
+use tauri::{AppHandle, Manager};
+use tokio::io::AsyncWriteExt;
+use crate::functions::worlds::update_worlds;
 
 #[derive(Deserialize, Serialize)]
 pub struct StatusResponse {
@@ -36,11 +37,19 @@ pub struct InstallProgress {
 pub fn bootstrap_check_status(app: AppHandle) -> Result<StatusResponse, String> {
     let path = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
-    let python = path.join("runtime").join("python").join("python.exe").exists();
+    let python = path
+        .join("runtime")
+        .join("python")
+        .join("python.exe")
+        .exists();
     let core = path.join("core").join("BaseClasses.py").exists();
     let status = python && core;
 
-    Ok(StatusResponse { status, python, core })
+    Ok(StatusResponse {
+        status,
+        python,
+        core,
+    })
 }
 
 const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -70,7 +79,10 @@ fn patch_path(dir: &Path, env_versions: &mut HashMap<String, String>) -> Result<
         let path = entry.path();
         if path.is_dir() {
             patch_path(&path, env_versions)?;
-        } else if path.file_name().map_or(false, |name| name == "requirements.txt") {
+        } else if path
+            .file_name()
+            .map_or(false, |name| name == "requirements.txt")
+        {
             if let Ok(contents) = fs::read_to_string(entry.path()) {
                 for line in contents.lines() {
                     if let Some(caps) = re_version.captures(line) {
@@ -81,7 +93,8 @@ fn patch_path(dir: &Path, env_versions: &mut HashMap<String, String>) -> Result<
                 }
 
                 if re.is_match(&contents) {
-                    let replaced = re.replace_all(&contents, "https://github.com/$1/$2/archive/$3.tar.gz");
+                    let replaced =
+                        re.replace_all(&contents, "https://github.com/$1/$2/archive/$3.tar.gz");
                     fs::write(entry.path(), replaced.as_bytes()).map_err(|e| e.to_string())?;
                 }
             }
@@ -90,7 +103,11 @@ fn patch_path(dir: &Path, env_versions: &mut HashMap<String, String>) -> Result<
     Ok("done".into())
 }
 #[tauri::command]
-pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: Channel<InstallProgress>) -> Result<String, String> {
+pub async fn bootstrap_install(
+    app: AppHandle,
+    apversion: String,
+    on_progress: Channel<InstallProgress>,
+) -> Result<String, String> {
     let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let runtime_dir = dir.join("runtime");
     let core_dir = dir.join("core");
@@ -110,7 +127,9 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
             percentage: 0.0,
         });
 
-        tokio::fs::create_dir_all(&runtime_dir).await.map_err(|e| e.to_string())?;
+        tokio::fs::create_dir_all(&runtime_dir)
+            .await
+            .map_err(|e| e.to_string())?;
         let temp_archive = runtime_dir.join("python_installer.tar.gz");
 
         let download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.11.17+20261003-x86_64-pc-windows-msvc-install_only.tar.gz";
@@ -125,7 +144,9 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         let total_size = response.content_length().unwrap_or(0);
         let mut downloaded: u64 = 0;
         let mut stream = response.bytes_stream();
-        let mut output = tokio::fs::File::create(&temp_archive).await.map_err(|e| e.to_string())?;
+        let mut output = tokio::fs::File::create(&temp_archive)
+            .await
+            .map_err(|e| e.to_string())?;
 
         while let Some(chunk) = stream.next().await {
             let chunk = chunk.map_err(|e| e.to_string())?;
@@ -165,8 +186,8 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
             let _ = fs::remove_file(&source);
             Ok(())
         })
-            .await
-            .map_err(|e| e.to_string())??;
+        .await
+        .map_err(|e| e.to_string())??;
 
         let _event = on_progress.send(InstallProgress {
             step: "extracting_python".into(),
@@ -177,7 +198,9 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     let core_main = core_dir.join("main.py");
 
     if core_main.exists() {
-        tokio::fs::remove_dir_all(&core_dir).await.map_err(|e| e.to_string())?;
+        tokio::fs::remove_dir_all(&core_dir)
+            .await
+            .map_err(|e| e.to_string())?;
     }
 
     let _event = on_progress.send(InstallProgress {
@@ -185,10 +208,13 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         percentage: 0.0,
     });
 
-    tokio::fs::create_dir_all(&core_dir).await.map_err(|e| e.to_string())?;
+    tokio::fs::create_dir_all(&core_dir)
+        .await
+        .map_err(|e| e.to_string())?;
     let temp_archive = core_dir.join("archipelago.tar.gz");
 
-    let download_url = "https://api.github.com/repos/ArchipelagoMW/Archipelago/tarball/".to_owned() + apversion.as_str();
+    let download_url = "https://api.github.com/repos/ArchipelagoMW/Archipelago/tarball/".to_owned()
+        + apversion.as_str();
     let client = reqwest::Client::new();
     let response = client
         .get(download_url)
@@ -200,7 +226,9 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     let total_size = response.content_length().unwrap_or(0);
     let mut downloaded: u64 = 0;
     let mut stream = response.bytes_stream();
-    let mut output = tokio::fs::File::create(&temp_archive).await.map_err(|e| e.to_string())?;
+    let mut output = tokio::fs::File::create(&temp_archive)
+        .await
+        .map_err(|e| e.to_string())?;
 
     while let Some(chunk) = stream.next().await {
         let chunk = chunk.map_err(|e| e.to_string())?;
@@ -252,8 +280,8 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         let _ = fs::remove_file(&source);
         Ok(())
     })
-        .await
-        .map_err(|e| e.to_string())??;
+    .await
+    .map_err(|e| e.to_string())??;
 
     let _event = on_progress.send(InstallProgress {
         step: "extracting_ap".into(),
@@ -272,7 +300,7 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         "install",
         "--upgrade",
         "setuptools<81",
-        "wheel"
+        "wheel",
     ]);
 
     #[cfg(target_os = "windows")]
@@ -285,12 +313,13 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         percentage: 33.0,
     });
 
-    let mut env_versions:HashMap<String,String> = HashMap::new();
+    let mut env_versions: HashMap<String, String> = HashMap::new();
     patch_path(core_dir.as_path(), &mut env_versions).expect("done");
 
     let ap_updater = core_dir.join("ModuleUpdate.py");
     let mut cmd_1 = Command::new(&python_exe);
-    cmd_1.current_dir(&core_dir)
+    cmd_1
+        .current_dir(&core_dir)
         .arg(&ap_updater)
         .arg("--yes")
         .env("SETUPTOOLS_SCM_PRETEND_VERSION", "0.1.0");
@@ -312,13 +341,9 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
 
     let requirements_path = core_dir.join("requirements.txt");
     let mut cmd_2 = Command::new(&python_exe);
-    cmd_2.args([
-        "-m",
-        "pip",
-        "install",
-        "-r",
-    ])
-    .arg(&requirements_path);
+    cmd_2
+        .args(["-m", "pip", "install", "-r"])
+        .arg(&requirements_path);
 
     #[cfg(target_os = "windows")]
     cmd_2.creation_flags(CREATE_NO_WINDOW);
@@ -337,9 +362,7 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
 
     let script_path = core_dir.join("Generate.py");
     let mut cmd_3 = Command::new(&python_exe);
-    cmd_3.current_dir(&core_dir)
-                .arg(&script_path)
-                .arg("--help");
+    cmd_3.current_dir(&core_dir).arg(&script_path).arg("--help");
 
     #[cfg(target_os = "windows")]
     cmd_3.creation_flags(CREATE_NO_WINDOW);
@@ -370,6 +393,8 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     }
 
     junction::create(worlds_dir, link_dir).map_err(|e| e.to_string())?;
+
+    update_worlds(app).await?;
 
     let _event = on_progress.send(InstallProgress {
         step: "linking_ap".into(),
