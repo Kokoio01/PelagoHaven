@@ -10,6 +10,7 @@ use tauri::{AppHandle, Manager};
 use tauri::ipc::Channel;
 use tokio::io::AsyncWriteExt;
 use regex::Regex;
+use std::os::windows::process::CommandExt;
 
 #[derive(Deserialize, Serialize)]
 pub struct StatusResponse {
@@ -41,6 +42,8 @@ pub fn bootstrap_check_status(app: AppHandle) -> Result<StatusResponse, String> 
 
     Ok(StatusResponse { status, python, core })
 }
+
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[tauri::command]
 pub async fn bootstrap_get_ap_versions() -> Result<Vec<APVersion>, String> {
@@ -262,17 +265,20 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
         percentage: 0.0,
     });
 
-    let _output = Command::new(&python_exe)
-        .args([
-            "-m",
-            "pip",
-            "install",
-            "--upgrade",
-            "setuptools<81",
-            "wheel"
-        ])
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = Command::new(&python_exe);
+    cmd.args([
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "setuptools<81",
+        "wheel"
+    ]);
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let _output = cmd.output().map_err(|e| e.to_string())?;
 
     let _event = on_progress.send(InstallProgress {
         step: "installing_ap".into(),
@@ -283,18 +289,21 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     patch_path(core_dir.as_path(), &mut env_versions).expect("done");
 
     let ap_updater = core_dir.join("ModuleUpdate.py");
-    let mut cmd = Command::new(&python_exe);
-    cmd.current_dir(&core_dir)
+    let mut cmd_1 = Command::new(&python_exe);
+    cmd_1.current_dir(&core_dir)
         .arg(&ap_updater)
         .arg("--yes")
         .env("SETUPTOOLS_SCM_PRETEND_VERSION", "0.1.0");
 
+    #[cfg(target_os = "windows")]
+    cmd_1.creation_flags(CREATE_NO_WINDOW);
+
     for (pkg, version) in env_versions {
         let key = format!("SETUPTOOLS_SCM_PRETEND_VERSION_FOR_{}", pkg);
-        cmd.env(key, version);
+        cmd_1.env(key, version);
     }
 
-    let _output = cmd.output().map_err(|e| e.to_string())?;
+    let _output = cmd_1.output().map_err(|e| e.to_string())?;
 
     let _event = on_progress.send(InstallProgress {
         step: "installing_ap".into(),
@@ -302,16 +311,19 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     });
 
     let requirements_path = core_dir.join("requirements.txt");
-    let _output = Command::new(&python_exe)
-        .args([
-            "-m",
-            "pip",
-            "install",
-            "-r",
-        ])
-        .arg(&requirements_path)
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd_2 = Command::new(&python_exe);
+    cmd_2.args([
+        "-m",
+        "pip",
+        "install",
+        "-r",
+    ])
+    .arg(&requirements_path);
+
+    #[cfg(target_os = "windows")]
+    cmd_2.creation_flags(CREATE_NO_WINDOW);
+
+    let _output = cmd_2.output().map_err(|e| e.to_string())?;
 
     let _event = on_progress.send(InstallProgress {
         step: "installing_ap".into(),
@@ -324,12 +336,15 @@ pub async fn bootstrap_install(app: AppHandle, apversion: String, on_progress: C
     });
 
     let script_path = core_dir.join("Generate.py");
-    let output = Command::new(&python_exe)
-        .current_dir(&core_dir)
-        .arg(&script_path)
-        .arg("--help")
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd_3 = Command::new(&python_exe);
+    cmd_3.current_dir(&core_dir)
+                .arg(&script_path)
+                .arg("--help");
+
+    #[cfg(target_os = "windows")]
+    cmd_3.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd_3.output().map_err(|e| e.to_string())?;
 
     println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     let _event = on_progress.send(InstallProgress {
