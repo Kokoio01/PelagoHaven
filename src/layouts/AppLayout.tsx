@@ -39,7 +39,7 @@ export default function AppLayout() {
         <div className="bg-stone-900 text-stone100 w-screen h-screen overflow-hidden">
             {(!completedSetup && true) ? <Setup/> :
                 <div className="flex flex-col h-full w-full">
-                    <header data-tauri-drag-region className="flex pl-2.5 pr-1 py-2 justify-between shrink-0">
+                    <header data-tauri-drag-region className="flex pl-3.5 pr-1 py-2 justify-between shrink-0">
                         <div className="flex items-center gap-4">
                             <h1 className="text-lg font-sans">PelagoHaven</h1>
                             <div className="flex text-stone-400">

@@ -5,6 +5,14 @@ import {PlusIcon, Search01Icon, TrashIcon} from "@hugeicons/core-free-icons";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/input-group.tsx";
 import {useMemo, useState} from "react";
 import Fuse from "fuse.js";
+import {
+    AlertDialog, AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle,
+    AlertDialogTrigger
+} from "../components/alert-dialog.tsx";
 
 
 type APWorld = {
@@ -95,10 +103,32 @@ export default function LibraryPage() {
                             <div
                                 className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
                             >
-                                <HugeiconsIcon
-                                    icon={TrashIcon}
-                                    onClick={() => setElements(elements.filter((world) => !(e.id === world.id)))}
-                                />
+                                <AlertDialog>
+                                    <AlertDialogTrigger
+                                        render={
+                                            <HugeiconsIcon
+                                                icon={TrashIcon}
+                                                className="hover:text-destructive text-stone-50"
+                                            />
+                                        }
+                                    />
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete {e.name}</AlertDialogTitle>
+                                            <AlertDialogDescription>This will permanently delete this World and can not be undone!</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>
+                                                Close
+                                            </AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={() => setElements(elements.filter((world) => !(e.id === world.id)))}
+                                            >
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </div>
                         </div>
                     )}
