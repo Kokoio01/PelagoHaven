@@ -68,6 +68,7 @@ pub fn run() {
             commands::worlds::worlds_get_worlds,
             commands::worlds::worlds_analyze_world,
             commands::worlds::worlds_install_world,
+            commands::worlds::worlds_remove_world,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

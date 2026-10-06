@@ -1,7 +1,6 @@
 use crate::functions::python::get_script_command;
 use crate::AppState;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 use tauri::{AppHandle, Manager};
 
 #[derive(Deserialize, Serialize)]
@@ -9,6 +8,7 @@ pub struct World {
     id: String,
     name: String,
     description: String,
+    path: String,
     custom: bool,
 }
 
@@ -26,21 +26,20 @@ pub async fn update_worlds(app: AppHandle) -> Result<(), String> {
     let worlds: Vec<World> = serde_json::from_str(&stdout).map_err(|e| format!("{}", e))?;
 
     let state = app.state::<AppState>();
-    let mutex_conn = state.conn.lock().unwrap();
-    let conn = mutex_conn.deref();
+    let mut conn = state.conn.lock().unwrap();
+    let tx = conn.transaction().map_err(|e| format!("{}", e))?;
+
+    tx.execute("DELETE FROM worlds", ())
+        .map_err(|e| format!("{}", e))?;
 
     for world in worlds {
-        conn.execute(
-            "INSERT INTO worlds (id, name, description, custom)
-                      VALUES (?, ?, ?, ?)
-                      ON CONFLICT (id) DO UPDATE
-                      SET custom = excluded.custom,
-                          name = excluded.name,
-                          description = excluded.description",
-            (world.id, world.name, world.description, world.custom),
-        )
-        .map_err(|e| format!("{}", e))?;
+        tx.execute(
+            "INSERT INTO worlds (id, name, description, path, custom) VALUES (?, ?, ?, ?, ?)",
+            (world.id, world.name, world.description, world.path, world.custom),
+        ).map_err(|e| format!("{}", e))?;
     }
+
+    tx.commit().map_err(|e| format!("{}", e))?;
 
     Ok(())
 }

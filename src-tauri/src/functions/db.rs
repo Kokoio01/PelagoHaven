@@ -8,6 +8,7 @@ pub fn db_init(conn: &mut Connection) -> Result<(), String> {
             custom BOOLEAN NOT NULL DEFAULT FALSE,
             name TEXT NOT NULL,
             description TEXT,
+            path TEXT NOT NULL,
             authors TEXT,
             options TEXT CHECK (json_valid(options))
         );",

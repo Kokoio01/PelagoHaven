@@ -15,12 +15,14 @@ import {
 import {invoke} from "@tauri-apps/api/core";
 import {InstallAPWorld} from "../components/installAPWorld.tsx";
 import {useOutletContext} from "react-router";
+import {Spinner} from "../components/spinner.tsx";
 
 
 type APWorld = {
     id: string,
     custom: boolean,
     name: string,
+    path: string,
     description?: string,
     grid?: string,
 }
@@ -35,10 +37,21 @@ export default function LibraryPage() {
     const [displayItems, setDisplayItems] = useState<APWorld[]>([])
     const [search, setSearch] = useState("")
     const [worldToDelete, setWorldToDelete] = useState<string | null>("")
+    const [worldDeleting, setWorldDeleting] = useState(false)
     const { filePath, clearFile } = useOutletContext<LayoutContextType>()
 
     async function loadWorlds() {
         setElements(await invoke<APWorld[]>("worlds_get_worlds") || []);
+    }
+
+    function removeWorld(path: string) {
+        invoke<Boolean>("worlds_remove_world", {path: path})
+            .then(() => {
+                loadWorlds().then(() => {
+                    setWorldToDelete(null)
+                    setWorldDeleting(false)
+                })
+            });
     }
 
     useEffect(() => {
@@ -91,34 +104,41 @@ export default function LibraryPage() {
                                     <p>{e.name}</p>
                                 </div>
                             }
-                            <div
-                                className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
-                            >
-                                <Button size="icon-lg" variant="ghost" onClick={() => setWorldToDelete(e.id)}>
-                                    <HugeiconsIcon
-                                        icon={TrashIcon}
-                                        className="hover:text-destructive text-stone-50"
-                                    />
-                                </Button>
-                            </div>
+                            { e.custom ?
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
+                                >
+                                    <Button size="icon-lg" variant="ghost" onClick={() => setWorldToDelete(e.path)}>
+                                        <HugeiconsIcon
+                                            icon={TrashIcon}
+                                            className="hover:text-destructive text-stone-50"
+                                        />
+                                    </Button>
+                                </div> : null
+                            }
                         </div>
                     )}
                     <AlertDialog open={!!worldToDelete} onOpenChange={(open) => !open && setWorldToDelete(null)}>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Delete {elements.filter((world) => worldToDelete === world.id)[0]?.name || "ERROR"}</AlertDialogTitle>
+                                <AlertDialogTitle>Delete {elements.filter((world) => worldToDelete === world.path)[0]?.name || "ERROR"}</AlertDialogTitle>
                                 <AlertDialogDescription>This will permanently delete this World and can not be undone!</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>
+                                <AlertDialogCancel
+                                    disabled={worldDeleting}
+                                >
                                     Close
                                 </AlertDialogCancel>
                                 <AlertDialogAction
+                                    disabled={worldDeleting}
                                     onClick={() => {
-                                        setElements(elements.filter((world) => !(worldToDelete === world.id)))
-                                        setWorldToDelete(null)
+                                        if (!worldToDelete) return;
+                                        setWorldDeleting(true)
+                                        removeWorld(worldToDelete)
                                     }}
                                 >
+                                    {worldDeleting ? <Spinner/> : null}
                                     Delete
                                 </AlertDialogAction>
                             </AlertDialogFooter>

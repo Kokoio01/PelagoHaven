@@ -33,6 +33,7 @@ pub struct APWorld {
     pub id: String,
     pub name: String,
     pub description: String,
+    pub path: String,
     pub custom: bool,
 }
 
@@ -51,6 +52,7 @@ pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<APWorld>, String> {
                 id: row.get(0)?,
                 name: row.get(2)?,
                 description: row.get(3)?,
+                path: row.get(4)?,
                 custom: row.get(1)?,
             })
         })
@@ -152,7 +154,7 @@ pub fn worlds_analyze_world(path: String) -> Result<AnalyzeResult, String> {
 }
 
 #[tauri::command]
-pub async fn worlds_install_world(mut app: AppHandle, path: String) -> Result<bool, String> {
+pub async fn worlds_install_world(app: AppHandle, path: String) -> Result<bool, String> {
     let src_path = Path::new(&path);
     let worlds_dir = app.path().app_data_dir().unwrap().join("worlds");
 
@@ -163,6 +165,30 @@ pub async fn worlds_install_world(mut app: AppHandle, path: String) -> Result<bo
     let dest_file_path = worlds_dir.join(file_name);
 
     fs::copy(path, dest_file_path).map_err(|e| format!("Failed to copy: {}", e))?;
+    update_worlds(app).await?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn worlds_remove_world(app: AppHandle, path: String) -> Result<bool, String> {
+    let custom = path.contains("custom_worlds");
+    if !custom {
+        return Ok(false);
+    }
+
+    let worlds_dir = app.path().app_data_dir().unwrap().join("worlds");
+
+    let segments = path.split("\\");
+    let mut file_name = "";
+    for segment in segments {
+        if segment.contains(".apworld") {
+            file_name = segment
+        }
+    }
+
+    let file_path = worlds_dir.join(file_name);
+    println!("{} -> {}", file_path.display(), file_name);
+    fs::remove_file(file_path).map_err(|e| format!("Failed to remove file: {}", e))?;
     update_worlds(app).await?;
     Ok(true)
 }

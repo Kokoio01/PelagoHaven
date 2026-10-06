@@ -16,6 +16,7 @@ for id in AutoWorldRegister.world_types:
         "id": id,
         "name": world_cls.game,
         "description": inspect.getdoc(world_cls),
+        "path": source_file,
         "custom": "custom_worlds" in source_file
     }
 
