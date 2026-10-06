@@ -1,4 +1,4 @@
-import {Link, Outlet} from "react-router";
+import {Link, Outlet, useNavigate} from "react-router";
 import {invoke} from "@tauri-apps/api/core";
 import {useEffect, useState} from "react";
 import Setup from "../pages/Setup.tsx";
@@ -11,6 +11,7 @@ import {
     Settings05Icon, SquareArrowExpand01Icon, SquareArrowShrink01Icon, XIcon
 } from "@hugeicons/core-free-icons";
 import {getCurrentWindow} from "@tauri-apps/api/window";
+import {listen} from "@tauri-apps/api/event";
 
 type StatusResponse = {
     status: boolean,
@@ -18,10 +19,40 @@ type StatusResponse = {
     core: boolean
 }
 
+const tabs = [
+    { name: "Home", path: "/", icon: <HugeiconsIcon icon={Home09Icon}/>},
+    { name: "Library", path: "/library", icon: <HugeiconsIcon icon={LibraryIcon}/>}
+]
+
 export default function AppLayout() {
     const [completedSetup, setCompletedSetup] = useState<boolean | undefined>()
     const appWindow = getCurrentWindow()
     const [maximized, setMaximized] = useState<boolean>(false)
+    const navigate = useNavigate()
+    const [filePath, setFilePath] = useState("")
+
+    useEffect(() => {
+        const unlisten = listen<string[]>("file-open", (event) => {
+            handleFile(event.payload[1]);
+        })
+
+        invoke<string | null>("get_opened_file")
+            .then((file) => {if (file) handleFile(file)})
+            .catch((err) => console.error("Error loading File: " + err))
+
+        return () => {
+            unlisten.then((f) => f());
+        };
+    }, [navigate, location]);
+
+    function handleFile(path: string) {
+        if (path && path.endsWith(".apworld")) {
+            setFilePath(path);
+            if (location.pathname !== "/library") {
+                navigate("/library");
+            }
+        }
+    }
 
     async function getStatus() {
         setCompletedSetup((await invoke<StatusResponse>("bootstrap_check_status")).status)
@@ -59,15 +90,16 @@ export default function AppLayout() {
                     <div className="flex flex-1 w-full min-h-0">
                         <aside className="flex flex-col h-full justify-between p-4 shrink-0">
                             <div className="flex flex-col items-center gap-4">
-                                <Link to="/"><HugeiconsIcon icon={Home09Icon}/></Link>
-                                <Link to="/library"><HugeiconsIcon icon={LibraryIcon}/></Link>
+                                {tabs.map((tab) =>
+                                    <Link to={tab.path}>{tab.icon}</Link>
+                                )}
                             </div>
                             <div>
                                 <Link to="/settings"><HugeiconsIcon icon={Settings05Icon}/></Link>
                             </div>
                         </aside>
                         <div className="flex-1 min-w-0 min-h-0 border-l border-t rounded-tl-2xl p-4 overflow-hidden">
-                            <Outlet/>
+                            <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
                         </div>
                     </div>
                 </div>

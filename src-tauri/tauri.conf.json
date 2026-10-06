@@ -26,6 +26,13 @@
     ],
     "resources": {
       "../scripts/": "scripts/"
-    }
+    },
+    "fileAssociations": [
+      {
+        "ext": ["apworld"],
+        "name": "Archipelago World",
+        "description": "Archipelago World File"
+      }
+    ]
   }
 }

@@ -1,3 +1,5 @@
+use crate::functions::worlds::update_worlds;
+use crate::AppState;
 use serde::Serialize;
 use serde::{Deserialize, Deserializer};
 use std::fs;
@@ -7,8 +9,6 @@ use std::ops::Deref;
 use std::path::Path;
 use tauri::{AppHandle, Manager};
 use zip::ZipArchive;
-use crate::AppState;
-use crate::functions::worlds::update_worlds;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ApWorldManifest {
@@ -42,17 +42,23 @@ pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<APWorld>, String> {
     let mutex_conn = state.conn.lock().unwrap();
     let conn = mutex_conn.deref();
 
-    let mut stmt = conn.prepare("SELECT * FROM worlds").map_err(|e| format!("{}", e))?;
-    let world_iter = stmt.query_map([], |row| {
-        Ok(APWorld {
-            id: row.get(0)?,
-            name: row.get(2)?,
-            description: row.get(3)?,
-            custom: row.get(1)?
+    let mut stmt = conn
+        .prepare("SELECT * FROM worlds")
+        .map_err(|e| format!("{}", e))?;
+    let world_iter = stmt
+        .query_map([], |row| {
+            Ok(APWorld {
+                id: row.get(0)?,
+                name: row.get(2)?,
+                description: row.get(3)?,
+                custom: row.get(1)?,
+            })
         })
-    }).map_err(|e| format!("{}", e))?;
+        .map_err(|e| format!("{}", e))?;
 
-    let worlds: Vec<APWorld> = world_iter.collect::<Result<_, _>>().map_err(|e| format!("{}", e))?;
+    let worlds: Vec<APWorld> = world_iter
+        .collect::<Result<_, _>>()
+        .map_err(|e| format!("{}", e))?;
 
     Ok(worlds)
 }
@@ -157,7 +163,7 @@ pub async fn worlds_install_world(mut app: AppHandle, path: String) -> Result<bo
     let dest_file_path = worlds_dir.join(file_name);
 
     fs::copy(path, dest_file_path).map_err(|e| format!("Failed to copy: {}", e))?;
-    update_worlds(&mut app).await?;
+    update_worlds(app).await?;
     Ok(true)
 }
 

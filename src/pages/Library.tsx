@@ -1,7 +1,7 @@
 import {ScrollArea} from "../components/scroll-area.tsx";
 import {Button} from "../components/button.tsx";
 import {HugeiconsIcon} from "@hugeicons/react";
-import {PlusIcon, Search01Icon, TrashIcon} from "@hugeicons/core-free-icons";
+import {Search01Icon, TrashIcon} from "@hugeicons/core-free-icons";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/input-group.tsx";
 import {useEffect, useMemo, useState} from "react";
 import Fuse from "fuse.js";
@@ -13,6 +13,8 @@ import {
     AlertDialogHeader, AlertDialogTitle,
 } from "../components/alert-dialog.tsx";
 import {invoke} from "@tauri-apps/api/core";
+import {InstallAPWorld} from "../components/installAPWorld.tsx";
+import {useOutletContext} from "react-router";
 
 
 type APWorld = {
@@ -23,16 +25,23 @@ type APWorld = {
     grid?: string,
 }
 
+type LayoutContextType = {
+    filePath: string;
+    clearFile: () => void
+}
+
 export default function LibraryPage() {
     const [elements, setElements] = useState<APWorld[]>([])
     const [displayItems, setDisplayItems] = useState<APWorld[]>([])
     const [search, setSearch] = useState("")
     const [worldToDelete, setWorldToDelete] = useState<string | null>("")
+    const { filePath, clearFile } = useOutletContext<LayoutContextType>()
+
+    async function loadWorlds() {
+        setElements(await invoke<APWorld[]>("worlds_get_worlds") || []);
+    }
 
     useEffect(() => {
-        async function loadWorlds() {
-            setElements(await invoke<APWorld[]>("worlds_get_worlds") || []);
-        }
         loadWorlds();
     }, []);
 
@@ -70,12 +79,7 @@ export default function LibraryPage() {
                         {elements.length} found
                     </InputGroupAddon>
                 </InputGroup>
-                <Button
-                    className="bg-accent hover:bg-accent-foreground transition-colors text-stone-300"
-                >
-                    <HugeiconsIcon icon={PlusIcon}/>
-                    Add APWorld
-                </Button>
+                <InstallAPWorld onInstall={() => loadWorlds()} onClose={clearFile} presetFile={filePath}/>
             </div>
             <ScrollArea className="flex-1 min-h-0">
                 <div className="pr-4 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-8 items-start w-full">

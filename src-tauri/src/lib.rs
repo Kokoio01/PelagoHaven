@@ -1,8 +1,8 @@
 extern crate alloc;
 
-use std::sync::Mutex;
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 use crate::functions::worlds::update_worlds;
+use std::sync::Mutex;
+use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 
 mod commands;
 mod functions;
@@ -11,9 +11,24 @@ pub struct AppState {
     pub conn: Mutex<rusqlite::Connection>,
 }
 
+#[derive(Default)]
+pub struct OpenedFile(pub Mutex<Option<String>>);
+
+#[tauri::command]
+async fn get_opened_file(state: State<'_, OpenedFile>) -> Result<Option<String>, String> {
+    Ok(state.0.lock().unwrap().take())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if let Some(main_window) = app.get_webview_window("main") {
+                let _ = app.emit("file-open", &args);
+                let _ = main_window.set_focus();
+            }
+        }))
+        .manage(OpenedFile::default())
         .setup(|app| {
             let mut win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("PelagoHaven")
@@ -33,18 +48,20 @@ pub fn run() {
             functions::db::db_init(&mut conn).unwrap();
 
             app.manage(AppState {
-                conn: Mutex::new(conn)
+                conn: Mutex::new(conn),
             });
 
-            let mut app_handle = app.handle().clone();
+            let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                let _ = update_worlds(&mut app_handle).await;
+                let _ = update_worlds(app_handle).await;
             });
 
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            get_opened_file,
             commands::bootstrap::bootstrap_check_status,
             commands::bootstrap::bootstrap_get_ap_versions,
             commands::bootstrap::bootstrap_install,
