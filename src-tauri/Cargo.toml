@@ -30,6 +30,7 @@ futures-util = "0.3.34"
 regex = "1.13.1"
 junction = "2.1.0"
 rusqlite = { version =  "0.40.2", features = ["bundled"] }
+rusqlite_migration = "2.6.0"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

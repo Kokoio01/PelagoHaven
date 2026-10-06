@@ -27,7 +27,9 @@ pub fn run() {
             let _window = win_builder.build().unwrap();
 
             let data_dir = app.path().app_data_dir().unwrap();
-            let conn = rusqlite::Connection::open(data_dir.join("app.db")).unwrap();
+            let mut conn = rusqlite::Connection::open(data_dir.join("app.db")).unwrap();
+            conn.pragma_update(None, "journal_mode", "WAL").unwrap();
+            functions::db::db_init(&mut conn).unwrap();
 
             app.manage(AppState {
                 conn: Mutex::new(conn)
