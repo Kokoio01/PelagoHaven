@@ -1,8 +1,14 @@
 extern crate alloc;
 
-use tauri::{WebviewUrl, WebviewWindowBuilder};
+use std::sync::Mutex;
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 mod commands;
+mod functions;
+
+pub struct AppState {
+    pub conn: Mutex<rusqlite::Connection>,
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -19,6 +25,13 @@ pub fn run() {
             }
 
             let _window = win_builder.build().unwrap();
+
+            let data_dir = app.path().app_data_dir().unwrap();
+            let conn = rusqlite::Connection::open(data_dir.join("app.db")).unwrap();
+
+            app.manage(AppState {
+                conn: Mutex::new(conn)
+            });
 
             Ok(())
         })
