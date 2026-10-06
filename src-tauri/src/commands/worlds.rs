@@ -3,9 +3,11 @@ use serde::{Deserialize, Deserializer};
 use std::fs;
 use std::fs::File;
 use std::io::Read;
+use std::ops::Deref;
 use std::path::Path;
 use tauri::{AppHandle, Manager};
 use zip::ZipArchive;
+use crate::AppState;
 use crate::functions::worlds::update_worlds;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -20,19 +22,41 @@ pub struct ApWorldManifest {
     pub authors: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ApWorld {
-    #[serde(flatten)]
-    pub manifest: ApWorldManifest,
-    pub path: String,
-    pub official: bool,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct AnalyzeResult {
     pub manifest: Option<ApWorldManifest>,
     pub errors: Option<Vec<String>>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct APWorld {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub custom: bool,
+}
+
+#[tauri::command]
+pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<APWorld>, String> {
+    let state = app.state::<AppState>();
+    let mutex_conn = state.conn.lock().unwrap();
+    let conn = mutex_conn.deref();
+
+    let mut stmt = conn.prepare("SELECT * FROM worlds").map_err(|e| format!("{}", e))?;
+    let world_iter = stmt.query_map([], |row| {
+        Ok(APWorld {
+            id: row.get(0)?,
+            name: row.get(2)?,
+            description: row.get(3)?,
+            custom: row.get(1)?
+        })
+    }).map_err(|e| format!("{}", e))?;
+
+    let worlds: Vec<APWorld> = world_iter.collect::<Result<_, _>>().map_err(|e| format!("{}", e))?;
+
+    Ok(worlds)
+}
+
 #[tauri::command]
 pub fn worlds_analyze_world(path: String) -> Result<AnalyzeResult, String> {
     let mut errors: Vec<String> = Vec::new();
