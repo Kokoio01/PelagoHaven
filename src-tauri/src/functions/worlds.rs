@@ -10,6 +10,7 @@ pub struct World {
     description: String,
     path: String,
     custom: bool,
+    options: serde_json::Value,
 }
 
 pub async fn update_worlds(app: AppHandle) -> Result<(), String> {
@@ -34,8 +35,8 @@ pub async fn update_worlds(app: AppHandle) -> Result<(), String> {
 
     for world in worlds {
         tx.execute(
-            "INSERT INTO worlds (id, name, description, path, custom) VALUES (?, ?, ?, ?, ?)",
-            (world.id, world.name, world.description, world.path, world.custom),
+            "INSERT INTO worlds (id, name, description, path, custom, options) VALUES (?, ?, ?, ?, ?, ?)",
+            (world.id, world.name, world.description, world.path, world.custom, serde_json::to_string(&world.options).unwrap()),
         ).map_err(|e| format!("{}", e))?;
     }
 

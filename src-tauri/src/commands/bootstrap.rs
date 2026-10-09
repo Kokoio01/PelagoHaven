@@ -1,4 +1,4 @@
-use futures_util::{StreamExt, TryFutureExt};
+use futures_util::{StreamExt};
 use regex::Regex;
 use reqwest::header::USER_AGENT;
 use serde::{Deserialize, Serialize};
