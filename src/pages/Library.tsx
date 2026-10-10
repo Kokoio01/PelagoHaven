@@ -16,16 +16,10 @@ import {invoke} from "@tauri-apps/api/core";
 import {InstallAPWorld} from "../components/installAPWorld.tsx";
 import {useOutletContext} from "react-router";
 import {Spinner} from "../components/spinner.tsx";
+import {MinimalWorld} from "../types/worlds.ts";
+import {WorldCard} from "../components/world.tsx";
+import {useWorlds} from "../hooks/worlds.ts";
 
-
-type APWorld = {
-    id: string,
-    custom: boolean,
-    name: string,
-    path: string,
-    description?: string,
-    grid?: string,
-}
 
 type LayoutContextType = {
     filePath: string;
@@ -33,21 +27,18 @@ type LayoutContextType = {
 }
 
 export default function LibraryPage() {
-    const [elements, setElements] = useState<APWorld[]>([])
-    const [displayItems, setDisplayItems] = useState<APWorld[]>([])
+    const { data: elements, refetch } = useWorlds()
+    const [displayItems, setDisplayItems] = useState<MinimalWorld[]>([])
     const [search, setSearch] = useState("")
     const [worldToDelete, setWorldToDelete] = useState<string | null>("")
     const [worldDeleting, setWorldDeleting] = useState(false)
     const { filePath, clearFile } = useOutletContext<LayoutContextType>()
 
-    async function loadWorlds() {
-        setElements(await invoke<APWorld[]>("worlds_get_worlds") || []);
-    }
 
     function removeWorld(path: string) {
         invoke<Boolean>("worlds_remove_world", {path: path})
             .then(() => {
-                loadWorlds().then(() => {
+                refetch().then(() => {
                     setWorldToDelete(null)
                     setWorldDeleting(false)
                 })
@@ -55,11 +46,11 @@ export default function LibraryPage() {
     }
 
     useEffect(() => {
-        loadWorlds();
+        refetch();
     }, []);
 
     const fuse = useMemo(() => {
-        return new Fuse(elements, {
+        return new Fuse(elements || [], {
             keys: ['name'],
             threshold: 0.4,
         })
@@ -68,9 +59,9 @@ export default function LibraryPage() {
     useEffect(() => {
         async function filter() {
             const results = search.length > 2 ? fuse.search(search) : []
-            setDisplayItems(results.length > 0
+            setDisplayItems(results.length || 0 > 0
                 ? results.map(({item}) => item)
-                : elements)
+                : elements || [])
         }
         filter()
     }, [fuse, elements, search]);
@@ -89,21 +80,16 @@ export default function LibraryPage() {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                     <InputGroupAddon align="inline-end">
-                        {elements.length} found
+                        {displayItems.length} found
                     </InputGroupAddon>
                 </InputGroup>
-                <InstallAPWorld onInstall={() => loadWorlds()} onClose={clearFile} presetFile={filePath}/>
+                <InstallAPWorld onInstall={() => refetch()} onClose={clearFile} presetFile={filePath}/>
             </div>
             <ScrollArea className="flex-1 min-h-0">
                 <div className="pr-4 grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-8 items-start w-full">
                     {displayItems.map((e) =>
                         <div key={e.id} className="group relative flex w-full h-60 rounded-xl shadow-stone-850 shadow-lg">
-                            {e.grid ?
-                                <img src={e.grid} alt={e.id + "grid image"} className="rounded-xl"></img> :
-                                <div className="bg-linear-to-t from-black to-stone-950 text-stone-300 w-full h-full rounded-xl content-center text-center p-2">
-                                    <p>{e.name}</p>
-                                </div>
-                            }
+                            <WorldCard world={e}/>
                             { e.custom ?
                                 <div
                                     className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
@@ -121,7 +107,7 @@ export default function LibraryPage() {
                     <AlertDialog open={!!worldToDelete} onOpenChange={(open) => !open && setWorldToDelete(null)}>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Delete {elements.filter((world) => worldToDelete === world.path)[0]?.name || "ERROR"}</AlertDialogTitle>
+                                <AlertDialogTitle>Delete {elements?.filter((world) => worldToDelete === world.path)[0]?.name || "World"}</AlertDialogTitle>
                                 <AlertDialogDescription>This will permanently delete this World and can not be undone!</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

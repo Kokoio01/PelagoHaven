@@ -12,3 +12,12 @@ export interface WorldAnalysis {
     manifest?: Manifest,
     errors?: string[]
 }
+
+export interface MinimalWorld {
+    id: string,
+    custom: boolean,
+    name: string,
+    path: string,
+    description?: string,
+    grid?: string,
+}
