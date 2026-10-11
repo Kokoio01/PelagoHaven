@@ -29,7 +29,7 @@ pub struct AnalyzeResult {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct APWorld {
+pub struct MinimalWorld {
     pub id: String,
     pub name: String,
     pub description: String,
@@ -38,27 +38,27 @@ pub struct APWorld {
 }
 
 #[tauri::command]
-pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<APWorld>, String> {
+pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<MinimalWorld>, String> {
     let state = app.state::<AppState>();
     let mutex_conn = state.conn.lock().unwrap();
     let conn = mutex_conn.deref();
 
     let mut stmt = conn
-        .prepare("SELECT * FROM worlds")
+        .prepare("SELECT id, name, description, path, custom FROM worlds")
         .map_err(|e| format!("{}", e))?;
     let world_iter = stmt
         .query_map([], |row| {
-            Ok(APWorld {
+            Ok(MinimalWorld {
                 id: row.get(0)?,
-                name: row.get(2)?,
-                description: row.get(3)?,
-                path: row.get(4)?,
-                custom: row.get(1)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                path: row.get(3)?,
+                custom: row.get(4)?,
             })
         })
         .map_err(|e| format!("{}", e))?;
 
-    let worlds: Vec<APWorld> = world_iter
+    let worlds: Vec<MinimalWorld> = world_iter
         .collect::<Result<_, _>>()
         .map_err(|e| format!("{}", e))?;
 

@@ -7,11 +7,12 @@ import {
     ArrowLeft02Icon,
     ArrowRight02Icon,
     Home09Icon, LibraryIcon,
-    MinusIcon,
+    MinusIcon, PlusIcon,
     Settings05Icon, SquareArrowExpand01Icon, SquareArrowShrink01Icon, XIcon
 } from "@hugeicons/core-free-icons";
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import {listen} from "@tauri-apps/api/event";
+import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 
 type StatusResponse = {
     status: boolean,
@@ -21,8 +22,11 @@ type StatusResponse = {
 
 const tabs = [
     { name: "Home", path: "/", icon: <HugeiconsIcon icon={Home09Icon}/>},
-    { name: "Library", path: "/library", icon: <HugeiconsIcon icon={LibraryIcon}/>}
+    { name: "Library", path: "/library", icon: <HugeiconsIcon icon={LibraryIcon}/>},
+    { name: "Generate", path: "/generate", icon: <HugeiconsIcon icon={PlusIcon}/>}
 ]
+
+const queryClient = new QueryClient();
 
 export default function AppLayout() {
     const [completedSetup, setCompletedSetup] = useState<boolean | undefined>()
@@ -99,7 +103,9 @@ export default function AppLayout() {
                             </div>
                         </aside>
                         <div className="flex-1 min-w-0 min-h-0 border-l border-t rounded-tl-2xl p-4 overflow-hidden">
-                            <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
+                            <QueryClientProvider client={queryClient}>
+                                <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
+                            </QueryClientProvider>
                         </div>
                     </div>
                 </div>
