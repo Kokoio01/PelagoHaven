@@ -66,6 +66,7 @@ pub fn run() {
             commands::bootstrap::bootstrap_get_ap_versions,
             commands::bootstrap::bootstrap_install,
             commands::worlds::worlds_get_worlds,
+            commands::worlds::worlds_get_world,
             commands::worlds::worlds_analyze_world,
             commands::worlds::worlds_install_world,
             commands::worlds::worlds_remove_world,

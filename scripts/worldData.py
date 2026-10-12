@@ -88,10 +88,10 @@ for id in AutoWorldRegister.world_types:
                     options_in_group.append(option_name)
             grouped_options[group.name] = group_options
 
-    ungrouped_options = []
+    ungrouped_options = {}
     for option in options.keys():
         if option not in options_in_group:
-            ungrouped_options.append(options[option])
+            ungrouped_options[option] = options[option]
 
     if ungrouped_options:
         grouped_options["General Options"] = ungrouped_options

@@ -37,6 +37,16 @@ pub struct MinimalWorld {
     pub custom: bool,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct FullWorld {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub path: String,
+    pub custom: bool,
+    pub options: String,
+}
+
 #[tauri::command]
 pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<MinimalWorld>, String> {
     let state = app.state::<AppState>();
@@ -63,6 +73,29 @@ pub fn worlds_get_worlds(app: AppHandle) -> Result<Vec<MinimalWorld>, String> {
         .map_err(|e| format!("{}", e))?;
 
     Ok(worlds)
+}
+
+#[tauri::command]
+pub fn worlds_get_world(app: AppHandle, worldid: String) -> Result<FullWorld, String> {
+    let state = app.state::<AppState>();
+    let mutex_conn = state.conn.lock().unwrap();
+    let conn = mutex_conn.deref();
+
+    let output: FullWorld = conn
+        .query_one(
+            "SELECT id, name, description, path, custom, options FROM worlds WHERE id = ?",
+            [worldid],
+            |row| { Ok(FullWorld {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                path: row.get(3)?,
+                custom: row.get(4)?,
+                options: row.get(5)?,
+            })},)
+        .map_err(|e| format!("{}", e))?;
+
+    Ok(output)
 }
 
 #[tauri::command]
