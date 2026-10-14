@@ -12,12 +12,14 @@ import {FullWorld, MinimalWorld} from "../types/worlds.ts";
 import Fuse from "fuse.js";
 import {nanoid} from "nanoid";
 import {invoke} from "@tauri-apps/api/core";
+import {Option} from "../types/options.ts";
+import {OptionEntry} from "../components/OptionEntry.tsx";
 
 type Slot = {
     id: string,
     name: string,
     world?: string,
-    options?: Object
+    options?: Record<string, Record<string, Option>>
 }
 
 export default function GeneratePage() {
@@ -47,7 +49,8 @@ export default function GeneratePage() {
 
     async function populateOptions(worldID: string, slotId: string) {
         const world = await invoke<FullWorld>("worlds_get_world", {worldid: worldID})
-        updateSlot({options: world.options}, slotId)
+        const options = JSON.parse(world.options) as Record<string, Record<string, Option>>
+        updateSlot({options}, slotId)
     }
     function updateSlot(fields: Partial<Slot>, slotId?: string) {
         const search = slotId ? slotId : selected
@@ -81,7 +84,23 @@ export default function GeneratePage() {
                             />
                         </div>
                         <div className="flex flex-1">
-                            <p>{selectedSlot.options?.toString()}</p>
+                            {selectedSlot.options ?
+                                <div>
+                                    {Object.entries(selectedSlot.options).map(([group, options]) => (
+                                        <div>
+                                            <p>{group}</p>
+                                            {Object.entries(options).map(([name, option]) => (
+                                                <div className="px-4">
+                                                    <OptionEntry option={option} setValue={() => {return}}/>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+                                :
+                                <div>
+                                </div>
+                            }
                         </div>
                     </div>
 

@@ -1,5 +1,3 @@
-import {Option} from "./options.ts";
-
 interface Manifest {
     game?: string,
     version?: number,
@@ -25,5 +23,5 @@ export interface MinimalWorld {
 }
 
 export interface FullWorld extends MinimalWorld {
-    options: Record<string, Record<string, Option>>
+    options: string,
 }

@@ -1,60 +1,178 @@
 import inspect
 import json
 
-from Options import Toggle, NamedRange, Range, TextChoice, Choice, FreeText, OptionSet, OptionList, OptionCounter
+from Options import Toggle, NamedRange, Range, TextChoice, Choice, FreeText, OptionSet, OptionList, OptionCounter, \
+    OptionDict, ItemDict, ItemSet, Removed, PlandoBosses, LocationSet, ItemLinks, PlandoConnections, PlandoItems, \
+    PlandoTexts, DefaultOnToggle, Option
+from schema import Schema, Optional, And, Or
 from worlds.AutoWorld import AutoWorldRegister
 
 worlds_to_skip = ["Archipelago"]
 worlds = []
 
+def json_safe(obj):
+    if isinstance(obj, dict):
+        new_dict = {}
+        for k, v in obj.items():
+            if isinstance(k, tuple):
+                key_str = "/".join(str(sub) for sub in k)
+            elif not isinstance(k, (str, int, float, bool)) and k is not None:
+                key_str = str(k)
+            else:
+                key_str = str(k)
+            new_dict[key_str] = json_safe(v)
+        return new_dict
+    if isinstance(obj, (list, tuple, set, frozenset)):
+        return [json_safe(v) for v in obj]
+    return obj
+
+def to_json(value):
+    if isinstance(value, (set, frozenset)):
+        return sorted(list(value), key=lambda x: str(x))
+    if isinstance(value, tuple):
+        return [to_json(item) for item in value]
+    if isinstance(value, dict):
+        return {str(k): to_json(v) for k, v in value.items()}
+    return value
+
+def json_schema(s):
+    if isinstance(s, Schema):
+        return json_schema(s._schema)
+    if isinstance(s, list):
+        return [json_schema(item) for item in s]
+    if isinstance(s, dict):
+        result = {}
+        for k, v in s.items():
+            key_name = k._schema if isinstance(k, Optional) else k
+            result[key_name] = {
+                "optional": isinstance(k, Optional),
+                "type": json_schema(v)
+            }
+        return result
+    if isinstance(s, Or):
+        return {"or": [json_schema(arg) for arg in s._args]}
+    if isinstance(s, And):
+        return {"and": [json_schema(arg) for arg in s._args]}
+    if isinstance(s, type):
+        return s.__name__
+    if callable(s):
+        return s.__name__
+    return str(s)
+
 def get_option(name, cls):
     desc = inspect.getdoc(cls)
-    display_name = getattr(cls, "display_name", name)
-
-    default_value = getattr(cls, "default", None)
-    if isinstance(default_value, (set, frozenset)):
-        default_value = sorted(list(default_value))
-    if isinstance(default_value, tuple):
-        default_value = default_value[0] if len(default_value) == 1 else list(default_value)
+    visibility = getattr(cls, "visibility", None)
+    if visibility is not None:
+        visibility = int(visibility)
+    raw_default = getattr(cls, "default", None)
+    raw_valid_keys = list(getattr(cls, "_valid_keys", getattr(cls, "valid_keys", [])))
 
     option = {
         "name": name,
-        "display_name": display_name,
-        "description": desc.strip(),
-        "default": default_value,
+        "display_name": getattr(cls, "display_name", name),
+        "description": (desc or "").strip(),
+
+        "default": to_json(raw_default),
+        "visibility": visibility,
+        "auto_display_name": getattr(cls, "auto_display_name", False),
+        "supports_weighting": getattr(cls, "supports_weighting", True),
+        "rich_text_doc": getattr(cls, "rich_text_doc", None),
+        "name_lookup": getattr(cls, "name_lookup", {}),
+        "options": getattr(cls, "options", {}),
+        "aliases": getattr(cls, "aliases", {}),
+
+        "valid_keys": to_json(raw_valid_keys),
+        "verify_item_name": getattr(cls, "verify_item_name", False),
+        "verify_location_name": getattr(cls, "verify_location_name", False),
+        "convert_name_groups": getattr(cls, "convert_name_groups", False),
+        "valid_keys_casefold": getattr(cls, "valid_keys_casefold", False),
     }
 
-    if issubclass(cls, Toggle):
-        option["type"] = "toggle"
-
-    elif issubclass(cls, NamedRange):
-        option["type"] = "named_range"
-        option["min"] = cls.range_start
-        option["max"] = cls.range_end
-        option["special_range_names"] = cls.special_range_names
-
-    elif issubclass(cls, Range):
-        option["type"] = "range"
-        option["min"] = cls.range_start
-        option["max"] = cls.range_end
-
-    elif issubclass(cls, TextChoice):
-        option["type"] = "text_choice"
-        option["choices"] = getattr(cls, "name_lookup", [])
-
-    elif issubclass(cls, Choice):
-        option["type"] = "choice"
-        raw_options = getattr(cls, "options", getattr(cls, "name_lookup", {}))
-        option["options"] = {
-            str(k): (v[0] if isinstance(v, tuple) else v)
-            for k, v in raw_options.items()
-            if isinstance(k, str)
-        }
+    if issubclass(cls, Removed):
+        option["type"] = "Removed"
 
     elif issubclass(cls, FreeText):
-        option["type"] = "free_text"
+        option["type"] = "FreeText"
 
-    # TODO: Support OptionSet, OptionList, OptionCounter
+    elif issubclass(cls, DefaultOnToggle):
+        option["type"] = "DefaultOnToggle"
+
+    elif issubclass(cls, Toggle):
+        option["type"] = "Toggle"
+
+    elif issubclass(cls, PlandoBosses):
+        option["type"] = "PlandoBosses"
+        option["bosses"] = list(getattr(cls, "bosses", []))
+        option["locations"] = list(getattr(cls, "locations", []))
+        option["duplicate_bosses"] = getattr(cls, "duplicate_bosses", False)
+
+    elif issubclass(cls, TextChoice):
+        option["type"] = "TextChoice"
+
+    elif issubclass(cls, Choice):
+        option["type"] = "Choice"
+
+    elif issubclass(cls, NamedRange):
+        option["type"] = "NamedRange"
+        option["range_start"] = getattr(cls, "range_start", 0)
+        option["range_end"] = getattr(cls, "range_end", 1)
+        option["special_range_names"] = getattr(cls, "special_range_names", {})
+
+    elif issubclass(cls, Range):
+        option["type"] = "Range"
+        option["range_start"] = getattr(cls, "range_start", 0)
+        option["range_end"] = getattr(cls, "range_end", 1)
+
+    elif issubclass(cls, ItemDict):
+        option["type"] = "ItemDict"
+        option["min"] = getattr(cls, "min", 0)
+        option["max"] = getattr(cls, "max", None)
+
+    elif issubclass(cls, OptionCounter):
+        option["type"] = "OptionCounter"
+        option["min"] = getattr(cls, "min", None)
+        option["max"] = getattr(cls, "max", None)
+
+    elif issubclass(cls, OptionDict):
+        option["type"] = "OptionDict"
+
+    elif issubclass(cls, ItemLinks):
+        option["type"] = "ItemLinks"
+        raw_schema = getattr(cls, "schema", None)
+        option["schema"] = json_schema(raw_schema) if raw_schema else None
+
+    elif issubclass(cls, OptionList):
+        option["type"] = "OptionList"
+
+    elif issubclass(cls, LocationSet):
+        option["type"] = "LocationSet"
+        option["random_str"] = getattr(cls, "random_str", None)
+
+    elif issubclass(cls, ItemSet):
+        option["type"] = "ItemSet"
+        option["random_str"] = getattr(cls, "random_str", None)
+
+    elif issubclass(cls, OptionSet):
+        option["type"] = "OptionSet"
+        option["random_str"] = getattr(cls, "random_str", None)
+
+    elif issubclass(cls, PlandoConnections):
+        option["type"] = "PlandoConnections"
+        option["entrances"] = list(getattr(cls, "entrances", []))
+        option["exits"] = list(getattr(cls, "exits", []))
+        option["duplicate_exits"] = getattr(cls, "duplicate_exits", False)
+
+    elif issubclass(cls, PlandoItems):
+        option["type"] = "PlandoItems"
+
+    elif issubclass(cls, PlandoTexts):
+        option["type"] = "PlandoTexts"
+
+    elif issubclass(cls, Option):
+        option["type"] = cls.__name__
+
+    else:
+        option["type"] = "Unknown"
 
     return option
 
@@ -107,4 +225,5 @@ for id in AutoWorldRegister.world_types:
 
     worlds.append(world)
 
-print(json.dumps(worlds))
+
+print(json.dumps(json_safe(worlds)))
