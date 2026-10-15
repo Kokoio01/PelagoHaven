@@ -1,6 +1,6 @@
 import {Button} from "../components/button.tsx";
 import {HugeiconsIcon} from "@hugeicons/react";
-import {PlusIcon, Rocket01Icon, Search01Icon} from "@hugeicons/core-free-icons";
+import {ChevronDownIcon, PlusIcon, Rocket01Icon, Search01Icon} from "@hugeicons/core-free-icons";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/input-group.tsx";
 import {Separator} from "../components/seperator.tsx";
 import {Input} from "../components/input.tsx";
@@ -14,6 +14,8 @@ import {nanoid} from "nanoid";
 import {invoke} from "@tauri-apps/api/core";
 import {Option} from "../types/options.ts";
 import {OptionEntry} from "../components/OptionEntry.tsx";
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "../components/collapsibale.tsx";
+import {Select, SelectTrigger, SelectValue} from "../components/select.tsx";
 
 type Slot = {
     id: string,
@@ -74,34 +76,48 @@ export default function GeneratePage() {
     const selectedSlot = slots.filter((s) => s.id === selected)[0]
     return (
         <main className="flex gap-3 h-full">
-            <div className="flex-1">
+            <div className="flex flex-1">
                 {selectedSlot?.world ?
-                    <div className="flex flex-col h-full">
-                        <div className="flex shrink-0">
+                    <div className="flex flex-col h-full w-full gap-4">
+                        <div className="flex shrink-0 gap-2">
                             <Input
                                 value={selectedSlot.name}
                                 onChange={(e) => updateSlot({name: e.target.value})}
                             />
+                            <Select>
+                                <SelectTrigger className="min-w-48">
+                                    <SelectValue
+                                        placeholder="Preset..."
+                                    />
+                                </SelectTrigger>
+                            </Select>
                         </div>
-                        <div className="flex flex-1">
-                            {selectedSlot.options ?
-                                <div>
+                        {selectedSlot.options ?
+                            <ScrollArea className="flex-1 min-h-0">
+                                <div className="flex flex-col pr-4 gap-2">
                                     {Object.entries(selectedSlot.options).map(([group, options]) => (
-                                        <div>
-                                            <p>{group}</p>
-                                            {Object.entries(options).map(([name, option]) => (
-                                                <div className="px-4">
-                                                    <OptionEntry option={option} setValue={() => {return}}/>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <Collapsible>
+                                            <CollapsibleTrigger
+                                                className="group flex w-full justify-between p-2 bg-stone-800 rounded-sm"
+                                            >
+                                                <p>{group}</p>
+                                                <HugeiconsIcon icon={ChevronDownIcon} className="transform duration-100 ease-out group-data-[panel-open]:rotate-180"/>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent className="flex flex-col gap-1 pt-1">
+                                                {Object.entries(options).map(([_name, option]) => (
+                                                    <div className="flex max-w-180 min-h-10 items-center">
+                                                        <OptionEntry option={option} value={option.default} setValue={() => {return}}/>
+                                                    </div>
+                                                ))}
+                                            </CollapsibleContent>
+                                        </Collapsible>
                                     ))}
                                 </div>
-                                :
-                                <div>
-                                </div>
-                            }
-                        </div>
+                            </ScrollArea>
+                            :
+                            <div>
+                            </div>
+                        }
                     </div>
 
                     :
@@ -134,36 +150,39 @@ export default function GeneratePage() {
             </div>
             <Separator orientation="vertical"/>
             <aside className="shrink-0 flex flex-col h-full">
-                <div className="flex-1">
-                    <div className="flex gap-2">
-                        <InputGroup>
-                            <InputGroupAddon>
-                                <HugeiconsIcon icon={Search01Icon}/>
-                            </InputGroupAddon>
-                            <InputGroupInput
-                                placeholder="Search Slot..."
-                            />
-                        </InputGroup>
-                        <Button
-                            size="icon"
-                            variant="default"
-                            onClick={() => createSlot()}
-                        >
-                            <HugeiconsIcon icon={PlusIcon}/>
-                        </Button>
-                    </div>
-                    <ScrollArea className="flex-1 min-h-0">
+                <div className="flex gap-2 shrink-0">
+                    <InputGroup>
+                        <InputGroupAddon>
+                            <HugeiconsIcon icon={Search01Icon}/>
+                        </InputGroupAddon>
+                        <InputGroupInput
+                            placeholder="Search Slot..."
+                        />
+                    </InputGroup>
+                    <Button
+                        size="icon"
+                        variant="default"
+                        onClick={() => createSlot()}
+                    >
+                        <HugeiconsIcon icon={PlusIcon}/>
+                    </Button>
+                </div>
+                <ScrollArea className="flex flex-col flex-1 min-h-0 pt-2">
+                    <div className="flex flex-col gap-2">
                         {slots.map((slot) =>
                             <div
-                                className="p-2"
+                                className={slot.id === selected ?
+                                           "p-2 rounded-sm bg-accent/50" :
+                                           "p-2 rounded-sm bg-stone-700/50" }
                                 onClick={() => setSelected(slot.id)}
                             >
-                                <p>{slot.name}</p>
+                                <p className="text-sm">{slot.name}</p>
+                                <p className="text-xs text-muted-foreground">{slot.world || "No game selected..."}</p>
                             </div>
                         )}
-                    </ScrollArea>
-                </div>
-                <div className="flex flex-col shrink-0 gap-2">
+                    </div>
+                </ScrollArea>
+                <div className="flex flex-col shrink-0 gap-2 pt-2">
                     <Separator/>
                     <Button className="w-full bg-accent hover:bg-accent-foreground text-primary">
                         <HugeiconsIcon icon={Rocket01Icon}/>

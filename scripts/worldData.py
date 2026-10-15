@@ -4,6 +4,7 @@ import json
 from Options import Toggle, NamedRange, Range, TextChoice, Choice, FreeText, OptionSet, OptionList, OptionCounter, \
     OptionDict, ItemDict, ItemSet, Removed, PlandoBosses, LocationSet, ItemLinks, PlandoConnections, PlandoItems, \
     PlandoTexts, DefaultOnToggle, Option
+from docutils.core import publish_parts
 from schema import Schema, Optional, And, Or
 from worlds.AutoWorld import AutoWorldRegister
 
@@ -60,17 +61,20 @@ def json_schema(s):
     return str(s)
 
 def get_option(name, cls):
-    desc = inspect.getdoc(cls)
     visibility = getattr(cls, "visibility", None)
     if visibility is not None:
         visibility = int(visibility)
     raw_default = getattr(cls, "default", None)
     raw_valid_keys = list(getattr(cls, "_valid_keys", getattr(cls, "valid_keys", [])))
 
+    description = inspect.getdoc(cls)
+    if getattr(cls, "rich_text_doc", False):
+        description = publish_parts(str(description), writer_name="html5")["html_body"]
+
     option = {
         "name": name,
         "display_name": getattr(cls, "display_name", name),
-        "description": (desc or "").strip(),
+        "description": (description or "").strip(),
 
         "default": to_json(raw_default),
         "visibility": visibility,

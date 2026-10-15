@@ -13,6 +13,7 @@ import {
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import {listen} from "@tauri-apps/api/event";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import {TooltipProvider} from "../components/tooltip.tsx";
 
 type StatusResponse = {
     status: boolean,
@@ -104,7 +105,9 @@ export default function AppLayout() {
                         </aside>
                         <div className="flex-1 min-w-0 min-h-0 border-l border-t rounded-tl-2xl p-4 overflow-hidden">
                             <QueryClientProvider client={queryClient}>
-                                <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
+                                <TooltipProvider>
+                                    <Outlet context={{filePath, clearFile: () => setFilePath("")}}/>
+                                </TooltipProvider>
                             </QueryClientProvider>
                         </div>
                     </div>
