@@ -1,3 +1,3 @@
 pub mod db;
-pub mod python;
+pub mod command;
 pub mod worlds;

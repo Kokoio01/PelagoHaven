@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::os::windows::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager};
 use tokio::io::AsyncWriteExt;
+use crate::functions::command::get_command;
 use crate::functions::worlds::update_worlds;
 
 #[derive(Deserialize, Serialize)]
@@ -36,12 +36,13 @@ pub struct InstallProgress {
 #[tauri::command]
 pub fn bootstrap_check_status(app: AppHandle) -> Result<StatusResponse, String> {
     let path = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let runtime_dir = path.join("runtime");
 
-    let python = path
-        .join("runtime")
-        .join("python")
-        .join("python.exe")
-        .exists();
+    let mut python_exe = runtime_dir.join("python").join("python.exe");
+    #[cfg(not(target_os = "windows"))] {
+        python_exe = runtime_dir.join("python").join("bin").join("python");
+    }
+    let python = python_exe.exists();
     let core = path.join("core").join("BaseClasses.py").exists();
     let status = python && core;
 
@@ -51,8 +52,6 @@ pub fn bootstrap_check_status(app: AppHandle) -> Result<StatusResponse, String> 
         core,
     })
 }
-
-const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[tauri::command]
 pub async fn bootstrap_get_ap_versions() -> Result<Vec<APVersion>, String> {
@@ -113,7 +112,10 @@ pub async fn bootstrap_install(
     let core_dir = dir.join("core");
     let worlds_dir = dir.join("worlds");
 
-    let python_exe = runtime_dir.join("python").join("python.exe");
+    let mut python_exe = runtime_dir.join("python").join("python.exe");
+    #[cfg(not(target_os = "windows"))] {
+        python_exe = runtime_dir.join("python").join("bin").join("python");
+    }
 
     println!("{:?}", runtime_dir);
     if python_exe.exists() {
@@ -132,7 +134,10 @@ pub async fn bootstrap_install(
             .map_err(|e| e.to_string())?;
         let temp_archive = runtime_dir.join("python_installer.tar.gz");
 
-        let download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.11.17+20261003-x86_64-pc-windows-msvc-install_only.tar.gz";
+        let mut download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.12.15+20261003-x86_64-pc-windows-msvc-install_only.tar.gz";        #[cfg(target_os = "macos")] {
+            download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.12.15+20261003-x86_64-apple-darwin-install_only.tar.gz";
+        }
+
         let client = reqwest::Client::new();
         let response = client
             .get(download_url)
@@ -188,6 +193,14 @@ pub async fn bootstrap_install(
         })
         .await
         .map_err(|e| e.to_string())??;
+
+        #[cfg(target_os = "macos")] {
+            let python_dir = runtime_dir.join("python");
+            let _status = Command::new("xattr")
+                .arg("-rd")
+                .arg("com.apple.quarantine")
+                .arg(python_dir);
+        }
 
         let _event = on_progress.send(InstallProgress {
             step: "extracting_python".into(),
@@ -293,7 +306,7 @@ pub async fn bootstrap_install(
         percentage: 0.0,
     });
 
-    let mut cmd = Command::new(&python_exe);
+    let mut cmd = get_command(&python_exe)?;
     cmd.args([
         "-m",
         "pip",
@@ -302,9 +315,6 @@ pub async fn bootstrap_install(
         "setuptools<81",
         "wheel",
     ]);
-
-    #[cfg(target_os = "windows")]
-    cmd.creation_flags(CREATE_NO_WINDOW);
 
     let _output = cmd.output().map_err(|e| e.to_string())?;
 
@@ -317,15 +327,12 @@ pub async fn bootstrap_install(
     patch_path(core_dir.as_path(), &mut env_versions).expect("done");
 
     let ap_updater = core_dir.join("ModuleUpdate.py");
-    let mut cmd_1 = Command::new(&python_exe);
+    let mut cmd_1 = get_command(&python_exe)?;
     cmd_1
         .current_dir(&core_dir)
         .arg(&ap_updater)
         .arg("--yes")
         .env("SETUPTOOLS_SCM_PRETEND_VERSION", "0.1.0");
-
-    #[cfg(target_os = "windows")]
-    cmd_1.creation_flags(CREATE_NO_WINDOW);
 
     for (pkg, version) in env_versions {
         let key = format!("SETUPTOOLS_SCM_PRETEND_VERSION_FOR_{}", pkg);
@@ -340,13 +347,10 @@ pub async fn bootstrap_install(
     });
 
     let requirements_path = core_dir.join("requirements.txt");
-    let mut cmd_2 = Command::new(&python_exe);
+    let mut cmd_2 = get_command(&python_exe)?;
     cmd_2
         .args(["-m", "pip", "install", "-r"])
         .arg(&requirements_path);
-
-    #[cfg(target_os = "windows")]
-    cmd_2.creation_flags(CREATE_NO_WINDOW);
 
     let _output = cmd_2.output().map_err(|e| e.to_string())?;
 
@@ -361,11 +365,8 @@ pub async fn bootstrap_install(
     });
 
     let script_path = core_dir.join("Generate.py");
-    let mut cmd_3 = Command::new(&python_exe);
+    let mut cmd_3 = get_command(&python_exe)?;
     cmd_3.current_dir(&core_dir).arg(&script_path).arg("--help");
-
-    #[cfg(target_os = "windows")]
-    cmd_3.creation_flags(CREATE_NO_WINDOW);
 
     let output = cmd_3.output().map_err(|e| e.to_string())?;
 
@@ -380,19 +381,34 @@ pub async fn bootstrap_install(
         percentage: 0.0,
     });
 
-    let link_dir = core_dir.join("custom_worlds");
+    let link_path = core_dir.join("custom_worlds");
 
     if !worlds_dir.exists() {
         fs::create_dir_all(&worlds_dir).map_err(|e| e.to_string())?;
     }
 
-    if junction::exists(&link_dir).unwrap_or(false) {
-        junction::delete(&link_dir).map_err(|e| e.to_string())?;
-    } else if link_dir.exists() {
-        fs::remove_dir_all(&link_dir).map_err(|e| e.to_string())?;
-    }
+    #[cfg(target_os = "windows")] {
+        if junction::exists(&link_path).unwrap_or(false) {
+            junction::delete(&link_path).map_err(|e| e.to_string())?;
+        } else if link_path.exists() {
+            fs::remove_dir_all(&link_path).map_err(|e| e.to_string())?;
+        }
 
-    junction::create(worlds_dir, link_dir).map_err(|e| e.to_string())?;
+        junction::create(worlds_dir, link_path).map_err(|e| e.to_string())?;
+    }
+    #[cfg(not(target_os = "windows"))] {
+        if let Ok(meta) = &link_path.symlink_metadata() {
+            if meta.file_type().is_symlink() {
+                fs::remove_file(&link_path).map_err(|e| e.to_string())?;
+            } else if meta.is_dir() {
+                fs::remove_dir_all(&link_path).map_err(|e| e.to_string())?;
+            } else {
+                fs::remove_file(&link_path).map_err(|e| e.to_string())?;
+            }
+        }
+
+        std::os::unix::fs::symlink(worlds_dir, link_path).map_err(|e| e.to_string())?;
+    }
 
     update_worlds(app).await?;
 

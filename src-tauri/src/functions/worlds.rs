@@ -1,4 +1,4 @@
-use crate::functions::python::get_script_command;
+use crate::functions::command::get_script_command;
 use crate::AppState;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
