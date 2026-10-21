@@ -2,6 +2,7 @@
 
 ### PelagoHaven
 
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 ![GitHub last commit](https://img.shields.io/github/last-commit/Kokoio01/PelagoHaven)
 
 ---
