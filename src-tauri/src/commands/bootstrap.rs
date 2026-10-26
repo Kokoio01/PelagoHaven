@@ -134,7 +134,8 @@ pub async fn bootstrap_install(
             .map_err(|e| e.to_string())?;
         let temp_archive = runtime_dir.join("python_installer.tar.gz");
 
-        let mut download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.12.15+20261003-x86_64-pc-windows-msvc-install_only.tar.gz";        #[cfg(target_os = "macos")] {
+        let mut download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.12.15+20261003-x86_64-pc-windows-msvc-install_only.tar.gz";
+        #[cfg(target_os = "macos")] {
             download_url = "https://github.com/astral-sh/python-build-standalone/releases/download/20261003/cpython-3.12.15+20261003-x86_64-apple-darwin-install_only.tar.gz";
         }
 

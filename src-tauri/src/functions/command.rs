@@ -4,7 +4,7 @@ use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 
 pub fn get_command(command: &PathBuf) -> Result<Command, String> {
-    let cmd = Command::new(command);
+    let mut cmd = Command::new(command);
     #[cfg(target_os = "windows")] {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;

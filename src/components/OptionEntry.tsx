@@ -6,11 +6,13 @@ import {Switch} from "./switch.tsx";
 import {Input} from "./input.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "./select.tsx";
 import {Slider} from "./slider.tsx";
+import {useCreatorStore} from "../stores/useCreatorStore.ts";
 
 interface OptionEntryProps {
-    option: Option,
-    value: unknown,
-    setValue: () => void
+    slotId: string,
+    category: string,
+    name: string,
+    option: Option
 }
 
 interface OptionTitleProps {
@@ -23,14 +25,25 @@ function convertDisplay(str: string): string {
     });
 }
 
-export function OptionEntry({option, value, setValue}: OptionEntryProps) {
+export function OptionEntry({slotId, category, name, option}: OptionEntryProps) {
+    const key = `${category}.${name}`;
+
+    const overrideValue = useCreatorStore((state) => state.slots[slotId]?.overrides[key])
+
+    const updateSlotOverride = useCreatorStore((state) => state.updateSlotOverride)
+    const setValue = (val: unknown) => updateSlotOverride(slotId, category, name, val)
+
+    const value = overrideValue !== undefined ? overrideValue : option.default
     switch (option.type) {
         case "Toggle":
         case "DefaultOnToggle": {
             return (
                 <div className="flex w-full items-center justify-between">
                     <OptionTitle option={option}/>
-                    <Switch checked={value as boolean}/>
+                    <Switch
+                        checked={value as boolean}
+                        onCheckedChange={(c) => setValue(c)}
+                    />
                 </div>
             )
         }
@@ -38,7 +51,10 @@ export function OptionEntry({option, value, setValue}: OptionEntryProps) {
             return (
                 <div className="flex w-full items-center justify-between gap-10">
                     <OptionTitle option={option}/>
-                    <Input value={value as string}/>
+                    <Input
+                        value={value as string}
+                        onChange={(e) => setValue(e.target.value)}
+                    />
                 </div>
             )
         }
@@ -47,13 +63,17 @@ export function OptionEntry({option, value, setValue}: OptionEntryProps) {
             return (
                 <div className="flex w-full items-center justify-between">
                     <OptionTitle option={option}/>
-                    <Select items={items} value={value as number}>
+                    <Select
+                        items={items}
+                        value={value as number}
+                        onValueChange={(v) => setValue(v)}
+                    >
                         <SelectTrigger className="w-full max-w-48">
                             <SelectValue placeholder="Select..."/>
                         </SelectTrigger>
                         <SelectContent>
                             {items.map((i) => (
-                                <SelectItem key={i.value} value={i.value}>
+                                <SelectItem key={i.label} value={i.value}>
                                     <p>{i.label}</p>
                                 </SelectItem>
                             ))}
@@ -71,6 +91,7 @@ export function OptionEntry({option, value, setValue}: OptionEntryProps) {
                         max={option.range_end}
                         className="max-w-70"
                         value={value as number}
+                        onValueChange={(v) => setValue(v)}
                     />
                 </div>
             )
@@ -83,13 +104,17 @@ export function OptionEntry({option, value, setValue}: OptionEntryProps) {
                         <OptionTitle option={option}/>
                     </div>
                     <div className="flex flex-1 flex-col gap-5 max-w-70">
-                        <Select items={items} value={value as number}>
+                        <Select
+                            items={items}
+                            value={value as number}
+                            onValueChange={(v) => setValue(v)}
+                        >
                             <SelectTrigger className="w-full">
                                 <SelectValue className="w-full" placeholder="Custom"/>
                             </SelectTrigger>
                             <SelectContent>
                                 {items.map((i) => (
-                                    <SelectItem key={i.value} value={i.value}>
+                                    <SelectItem key={i.label} value={i.value}>
                                         <p>{i.label}</p>
                                     </SelectItem>
                                 ))}
@@ -99,6 +124,7 @@ export function OptionEntry({option, value, setValue}: OptionEntryProps) {
                             min={option.range_start}
                             max={option.range_end}
                             value={value as number}
+                            onValueChange={(v) => setValue(v)}
                             className="max-w-70"
                         />
                     </div>

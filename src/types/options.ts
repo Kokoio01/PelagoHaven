@@ -25,7 +25,10 @@ export interface BasicOption {
     verify_item_name: boolean,
     verify_location_name: boolean,
     convert_name_groups: boolean,
-    valid_keys_casefold: boolean
+    valid_keys_casefold: boolean,
+
+    value: unknown,
+    initialized: boolean,
 }
 
 export interface Removed extends BasicOption {

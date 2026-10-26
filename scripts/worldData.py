@@ -60,7 +60,7 @@ def json_schema(s):
         return s.__name__
     return str(s)
 
-def get_option(name, cls):
+def get_option(name, cls, rich_text):
     visibility = getattr(cls, "visibility", None)
     if visibility is not None:
         visibility = int(visibility)
@@ -80,7 +80,7 @@ def get_option(name, cls):
         "visibility": visibility,
         "auto_display_name": getattr(cls, "auto_display_name", False),
         "supports_weighting": getattr(cls, "supports_weighting", True),
-        "rich_text_doc": getattr(cls, "rich_text_doc", None),
+        "rich_text_doc": getattr(cls, "rich_text_doc", rich_text),
         "name_lookup": getattr(cls, "name_lookup", {}),
         "options": getattr(cls, "options", {}),
         "aliases": getattr(cls, "aliases", {}),
@@ -185,10 +185,14 @@ for id in AutoWorldRegister.world_types:
         continue
     world_cls = AutoWorldRegister.world_types.get(id)
     source_file = inspect.getfile(world_cls)
+    rich_text = False
+
+    if hasattr(world_cls, "web") and hasattr(world_cls.web, "rich_text_options_doc"):
+        rich_text = world_cls.web.rich_text_options_doc
 
     options = {}
     for option_name, cls in world_cls.options_dataclass.type_hints.items():
-        options[option_name] = get_option(option_name, cls)
+        options[option_name] = get_option(option_name, cls, rich_text)
 
     groups = []
     option_names = {
