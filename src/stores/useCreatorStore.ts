@@ -88,8 +88,8 @@ export const useCreatorStore = create<CreatorStore>()(
                 if (!slot) return;
                 const key = `${category}.${name}`
 
-                const world = state.worldOptionsCache[slot.worldId];
-                const defaultValue = world?.options?.[category]?.[name]?.default;
+                const options = state.worldOptionsCache[slot.worldId];
+                const defaultValue = options?.[category]?.[name]?.default;
 
                 if (value === defaultValue) {
                     delete slot.overrides[key];

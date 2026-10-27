@@ -28,6 +28,8 @@ export default function GeneratePage() {
     const createSlot = useCreatorStore((state) => state.createSlot)
     const updateSlotWorld = useCreatorStore((state) => state.updateSlotWorld)
 
+    const [ slotSearch, setSlotSearch ] = useState("")
+
     const { data: worlds } = useWorlds();
     const [ worldSearch, setWorldSearch ] = useState("")
     const [ filteredWorlds, setFilteredWorlds ] = useState<MinimalWorld[]>([])
@@ -139,6 +141,8 @@ export default function GeneratePage() {
                         </InputGroupAddon>
                         <InputGroupInput
                             placeholder="Search Slot..."
+                            value={slotSearch}
+                            onChange={(e) => setSlotSearch(e.target.value)}
                         />
                     </InputGroup>
                     <Button
@@ -156,6 +160,7 @@ export default function GeneratePage() {
                                 key={id}
                                 slotId={id}
                                 isActive={id === activeSlotId}
+                                search={slotSearch}
                             />
                         ))}
                     </div>
@@ -172,22 +177,26 @@ export default function GeneratePage() {
     )
 }
 
-const SlotListItem = memo(function SlotListItem({slotId, isActive,}: { slotId: string; isActive: boolean; }) {
+const SlotListItem = memo(function SlotListItem({slotId, isActive, search}: { slotId: string; isActive: boolean; search: string; }) {
     const name = useCreatorStore((state) => state.slots[slotId]?.name);
     const worldId = useCreatorStore((state) => state.slots[slotId]?.worldId);
     const setActiveSlotId = useCreatorStore((state) => state.setActiveSlotId);
+    const fuse = new Fuse([name, worldId]).search(search)
 
-    return (
-        <div
-            className={`p-2 rounded-sm cursor-pointer transition-colors ${
-                isActive ? "bg-accent/50" : "bg-stone-700/50 hover:bg-stone-700/80"
-            }`}
-            onClick={() => setActiveSlotId(slotId)}
-        >
-            <p className="text-sm">{name}</p>
-            <p className="text-xs text-muted-foreground">{worldId || "No game selected..."}</p>
-        </div>
-    );
+    if (fuse.length >= 1) {
+        return (
+            <div
+                className={`p-2 rounded-sm cursor-pointer transition-colors ${
+                    isActive ? "bg-accent/50" : "bg-stone-700/50 hover:bg-stone-700/80"
+                }`}
+                onClick={() => setActiveSlotId(slotId)}
+            >
+                <p className="text-sm">{name}</p>
+                <p className="text-xs text-muted-foreground">{worldId || "No game selected..."}</p>
+            </div>
+        );
+    }
+    return null
 });
 
 function SlotTitleInput({ slotId }: { slotId: string }) {
