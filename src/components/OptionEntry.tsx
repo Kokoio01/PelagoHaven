@@ -1,6 +1,6 @@
 import {Option} from "../types/options.ts";
 import {HugeiconsIcon} from "@hugeicons/react";
-import {Alert02Icon, CornerDownRightIcon, HelpCircleIcon} from "@hugeicons/core-free-icons";
+import {Alert02Icon, AlertCircleIcon, CornerDownRightIcon, HelpCircleIcon} from "@hugeicons/core-free-icons";
 import {Tooltip, TooltipContent, TooltipTrigger} from "./tooltip.tsx";
 import {Switch} from "./switch.tsx";
 import {Input} from "./input.tsx";
@@ -128,6 +128,21 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
                             className="max-w-70"
                         />
                     </div>
+                </div>
+            )
+        }
+        case "Removed": {
+            return (
+                <div className="flex w-full items-center justify-between gap-10">
+                    <OptionTitle option={option}/>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <HugeiconsIcon icon={AlertCircleIcon} className="scale-80"/>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>This Option has been removed from the world</p>
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
             )
         }
