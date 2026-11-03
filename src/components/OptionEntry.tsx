@@ -91,13 +91,18 @@ export function OptionEntry({slotId, category, name, visibility, option}: Option
             return (
                 <div className="flex w-full items-center justify-between gap-10 min-h-10">
                     <OptionTitle option={option}/>
-                    <Slider
-                        min={option.range_start}
-                        max={option.range_end}
-                        className="max-w-70"
-                        value={value as number}
-                        onValueChange={(v) => setValue(v)}
-                    />
+                    <div className="flex w-full items-center max-w-60 gap-2">
+                        <Slider
+                            min={option.range_start}
+                            max={option.range_end}
+                            className="flex-1"
+                            value={value as number}
+                            onValueChange={(v) => setValue(v)}
+                        />
+                        <p className="flex justify-center text-center min-w-5">
+                            {value as number}
+                        </p>
+                    </div>
                 </div>
             )
         }
