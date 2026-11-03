@@ -13,7 +13,7 @@ import {
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import {listen} from "@tauri-apps/api/event";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {TooltipProvider} from "../components/tooltip.tsx";
+import {TooltipProvider} from "../components/ui/tooltip.tsx";
 
 type StatusResponse = {
     status: boolean,

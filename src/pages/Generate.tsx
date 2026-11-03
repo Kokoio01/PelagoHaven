@@ -1,4 +1,4 @@
-import {Button} from "../components/button.tsx";
+import {Button} from "../components/ui/button.tsx";
 import {HugeiconsIcon} from "@hugeicons/react";
 import {
     ChevronDownIcon,
@@ -7,17 +7,17 @@ import {
     Rocket01Icon,
     Search01Icon
 } from "@hugeicons/core-free-icons";
-import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/input-group.tsx";
-import {Separator} from "../components/seperator.tsx";
-import {Input} from "../components/input.tsx";
+import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/ui/input-group.tsx";
+import {Separator} from "../components/ui/seperator.tsx";
+import {Input} from "../components/ui/input.tsx";
 import {memo, useEffect, useMemo, useState} from "react";
-import {ScrollArea} from "../components/scroll-area.tsx";
+import {ScrollArea} from "../components/ui/scroll-area.tsx";
 import {useWorlds} from "../hooks/worlds.ts";
 import {WorldCard} from "../components/world.tsx";
 import {MinimalWorld} from "../types/worlds.ts";
 import Fuse from "fuse.js";
 import {OptionEntry} from "../components/OptionEntry.tsx";
-import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "../components/collapsibale.tsx";
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "../components/ui/collapsibale.tsx";
 import {useCreatorStore} from "../stores/useCreatorStore.ts";
 import {useShallow} from "zustand/react/shallow";
 import {Visibility} from "../types/options.ts";
@@ -26,7 +26,7 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem,
     DropdownMenuTrigger
-} from "../components/dropdown-menu.tsx";
+} from "../components/ui/dropdown-menu.tsx";
 
 export default function GeneratePage() {
     const slotIds = useCreatorStore(

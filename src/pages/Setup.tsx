@@ -8,8 +8,8 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue
-} from "../components/select.tsx";
-import {Button} from "../components/button.tsx";
+} from "../components/ui/select.tsx";
+import {Button} from "../components/ui/button.tsx";
 
 export type Step = "welcome" | "select_version" | "installing"
 

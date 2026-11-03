@@ -1,11 +1,11 @@
 import {Option, Visibility} from "../types/options.ts";
 import {HugeiconsIcon} from "@hugeicons/react";
 import {Alert02Icon, AlertCircleIcon, CornerDownRightIcon, HelpCircleIcon} from "@hugeicons/core-free-icons";
-import {Tooltip, TooltipContent, TooltipTrigger} from "./tooltip.tsx";
-import {Switch} from "./switch.tsx";
-import {Input} from "./input.tsx";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "./select.tsx";
-import {Slider} from "./slider.tsx";
+import {Tooltip, TooltipContent, TooltipTrigger} from "./ui/tooltip.tsx";
+import {Switch} from "./ui/switch.tsx";
+import {Input} from "./ui/input.tsx";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "./ui/select.tsx";
+import {Slider} from "./ui/slider.tsx";
 import {useCreatorStore} from "../stores/useCreatorStore.ts";
 
 interface OptionEntryProps {

@@ -2,17 +2,17 @@ import {
     Dialog,
     DialogContent, DialogDescription, DialogHeader, DialogTitle,
     DialogTrigger
-} from "./dialog.tsx";
-import {Button} from "./button.tsx";
-import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "./empty.tsx";
+} from "./ui/dialog.tsx";
+import {Button} from "./ui/button.tsx";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "./ui/empty.tsx";
 import {useEffect, useState} from "react";
 import {UnlistenFn} from "@tauri-apps/api/event";
 import {getCurrentWindow} from "@tauri-apps/api/window";
 import {WorldAnalysis} from "../types/worlds.ts";
 import {invoke} from "@tauri-apps/api/core";
-import {Alert, AlertDescription, AlertTitle} from "./alert.tsx";
+import {Alert, AlertDescription, AlertTitle} from "./ui/alert.tsx";
 import {open} from "@tauri-apps/plugin-dialog";
-import {Spinner} from "./spinner.tsx";
+import {Spinner} from "./ui/spinner.tsx";
 import {
     Alert02Icon,
     FileArchiveIcon,

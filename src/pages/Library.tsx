@@ -1,8 +1,8 @@
-import {ScrollArea} from "../components/scroll-area.tsx";
-import {Button} from "../components/button.tsx";
+import {ScrollArea} from "../components/ui/scroll-area.tsx";
+import {Button} from "../components/ui/button.tsx";
 import {HugeiconsIcon} from "@hugeicons/react";
 import {Search01Icon, TrashIcon} from "@hugeicons/core-free-icons";
-import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/input-group.tsx";
+import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/ui/input-group.tsx";
 import {useEffect, useMemo, useState} from "react";
 import Fuse from "fuse.js";
 import {
@@ -11,11 +11,11 @@ import {
     AlertDialogContent, AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader, AlertDialogTitle,
-} from "../components/alert-dialog.tsx";
+} from "../components/ui/alert-dialog.tsx";
 import {invoke} from "@tauri-apps/api/core";
 import {InstallAPWorld} from "../components/installAPWorld.tsx";
 import {useOutletContext} from "react-router";
-import {Spinner} from "../components/spinner.tsx";
+import {Spinner} from "../components/ui/spinner.tsx";
 import {MinimalWorld} from "../types/worlds.ts";
 import {WorldCard} from "../components/world.tsx";
 import {useWorlds} from "../hooks/worlds.ts";
