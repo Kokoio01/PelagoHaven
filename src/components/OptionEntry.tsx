@@ -1,4 +1,4 @@
-import {Option} from "../types/options.ts";
+import {Option, Visibility} from "../types/options.ts";
 import {HugeiconsIcon} from "@hugeicons/react";
 import {Alert02Icon, AlertCircleIcon, CornerDownRightIcon, HelpCircleIcon} from "@hugeicons/core-free-icons";
 import {Tooltip, TooltipContent, TooltipTrigger} from "./tooltip.tsx";
@@ -12,6 +12,7 @@ interface OptionEntryProps {
     slotId: string,
     category: string,
     name: string,
+    visibility: Visibility,
     option: Option
 }
 
@@ -25,7 +26,7 @@ function convertDisplay(str: string): string {
     });
 }
 
-export function OptionEntry({slotId, category, name, option}: OptionEntryProps) {
+export function OptionEntry({slotId, category, name, visibility, option}: OptionEntryProps) {
     const key = `${category}.${name}`;
 
     const overrideValue = useCreatorStore((state) => state.slots[slotId]?.overrides[key])
@@ -33,12 +34,16 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
     const updateSlotOverride = useCreatorStore((state) => state.updateSlotOverride)
     const setValue = (val: unknown) => updateSlotOverride(slotId, category, name, val)
 
+    if ((visibility & option.visibility) == 0) {
+        return
+    }
+
     const value = overrideValue !== undefined ? overrideValue : option.default
     switch (option.type) {
         case "Toggle":
         case "DefaultOnToggle": {
             return (
-                <div className="flex w-full items-center justify-between">
+                <div className="flex w-full items-center justify-between min-h-10">
                     <OptionTitle option={option}/>
                     <Switch
                         checked={value as boolean}
@@ -49,7 +54,7 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
         }
         case "FreeText": {
             return (
-                <div className="flex w-full items-center justify-between gap-10">
+                <div className="flex w-full items-center justify-between gap-10 min-h-10">
                     <OptionTitle option={option}/>
                     <Input
                         value={value as string}
@@ -61,7 +66,7 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
         case "Choice": {
             const items = Object.entries(option.options).map(([label, value]) =>{ return  {label: convertDisplay(label), value: value}})
             return (
-                <div className="flex w-full items-center justify-between">
+                <div className="flex w-full items-center justify-between min-h-10">
                     <OptionTitle option={option}/>
                     <Select
                         items={items}
@@ -84,7 +89,7 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
         }
         case "Range": {
             return (
-                <div className="flex w-full items-center justify-between gap-10">
+                <div className="flex w-full items-center justify-between gap-10 min-h-10">
                     <OptionTitle option={option}/>
                     <Slider
                         min={option.range_start}
@@ -99,7 +104,7 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
         case "NamedRange": {
             const items = Object.entries(option.special_range_names).map(([label, value]) =>{ return  {label: convertDisplay(label), value: value}})
             return (
-                <div className="flex w-full min-h-17 justify-between gap-10 items-start">
+                <div className="flex w-full justify-between gap-10 items-start min-h-17">
                     <div className="pt-1">
                         <OptionTitle option={option}/>
                     </div>
@@ -133,7 +138,7 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
         }
         case "Removed": {
             return (
-                <div className="flex w-full items-center justify-between gap-10">
+                <div className="flex w-full items-center justify-between gap-10 min-h-10">
                     <OptionTitle option={option}/>
                     <Tooltip>
                         <TooltipTrigger>
@@ -148,7 +153,7 @@ export function OptionEntry({slotId, category, name, option}: OptionEntryProps) 
         }
         default: {
             return (
-                <div className="flex w-full items-center justify-between gap-10">
+                <div className="flex w-full items-center justify-between gap-10 min-h-10">
                     <OptionTitle option={option}/>
                     <Tooltip>
                         <TooltipTrigger>

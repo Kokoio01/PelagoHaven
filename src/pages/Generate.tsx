@@ -1,6 +1,12 @@
 import {Button} from "../components/button.tsx";
 import {HugeiconsIcon} from "@hugeicons/react";
-import {ChevronDownIcon, PlusIcon, Rocket01Icon, Search01Icon} from "@hugeicons/core-free-icons";
+import {
+    ChevronDownIcon,
+    MoreVerticalSquare01Icon,
+    PlusIcon,
+    Rocket01Icon,
+    Search01Icon
+} from "@hugeicons/core-free-icons";
 import {InputGroup, InputGroupAddon, InputGroupInput} from "../components/input-group.tsx";
 import {Separator} from "../components/seperator.tsx";
 import {Input} from "../components/input.tsx";
@@ -12,9 +18,15 @@ import {MinimalWorld} from "../types/worlds.ts";
 import Fuse from "fuse.js";
 import {OptionEntry} from "../components/OptionEntry.tsx";
 import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "../components/collapsibale.tsx";
-import {Select, SelectTrigger, SelectValue} from "../components/select.tsx";
 import {useCreatorStore} from "../stores/useCreatorStore.ts";
 import {useShallow} from "zustand/react/shallow";
+import {Visibility} from "../types/options.ts";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem,
+    DropdownMenuTrigger
+} from "../components/dropdown-menu.tsx";
 
 export default function GeneratePage() {
     const slotIds = useCreatorStore(
@@ -33,6 +45,8 @@ export default function GeneratePage() {
     const { data: worlds } = useWorlds();
     const [ worldSearch, setWorldSearch ] = useState("")
     const [ filteredWorlds, setFilteredWorlds ] = useState<MinimalWorld[]>([])
+
+    const [ visibility, setVisibility ] = useState<Visibility>(Visibility.simple_ui)
 
     const fuse = useMemo(() => {
         return new Fuse(worlds || [], {
@@ -62,13 +76,29 @@ export default function GeneratePage() {
                     <div className="flex flex-col h-full w-full gap-4">
                         <div className="flex shrink-0 gap-2">
                             <SlotTitleInput slotId={activeSlotId}/>
-                            <Select>
-                                <SelectTrigger className="min-w-48">
-                                    <SelectValue
-                                        placeholder="Preset..."
-                                    />
-                                </SelectTrigger>
-                            </Select>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger
+                                    render={
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                        >
+                                            <HugeiconsIcon icon={MoreVerticalSquare01Icon} />
+                                        </Button>
+                                    }
+                                />
+                                <DropdownMenuContent>
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuLabel>Visibility</DropdownMenuLabel>
+                                        <DropdownMenuRadioGroup value={visibility} onValueChange={(v) => setVisibility(v)}>
+                                            <DropdownMenuRadioItem value={Visibility.simple_ui}>Simple UI</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value={Visibility.complex_ui}>Complex UI</DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value={Visibility.all}>Everything</DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
                         </div>
                         {worldOptions ?
                             <ScrollArea className="flex-1 min-h-0">
@@ -83,12 +113,13 @@ export default function GeneratePage() {
                                             </CollapsibleTrigger>
                                             <CollapsibleContent className="flex flex-col gap-1 pt-1">
                                                 {Object.entries(options).map(([name, option]) => (
-                                                    <div className="flex max-w-180 min-h-10 items-center">
+                                                    <div className="flex max-w-180 items-center">
                                                         <OptionEntry
                                                             key={name}
                                                             slotId={activeSlotId}
                                                             category={group}
                                                             name={name}
+                                                            visibility={visibility}
                                                             option={option}
                                                         />
                                                     </div>
