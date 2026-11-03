@@ -87,6 +87,39 @@ export function OptionEntry({slotId, category, name, visibility, option}: Option
                 </div>
             )
         }
+        case "TextChoice": {
+            const items = Object.entries(option.options).map(([label, value]) =>{ return  {label: convertDisplay(label), value: value}})
+            return (
+                <div className="flex w-full justify-between gap-10 items-start min-h-20">
+                    <div className="pt-1">
+                        <OptionTitle option={option}/>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-3 max-w-70">
+                        <Select
+                            items={items}
+                            value={value as string}
+                            onValueChange={(v) => setValue(v)}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue className="w-full" placeholder="Custom"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {items.map((i) => (
+                                    <SelectItem key={i.label} value={i.value}>
+                                        <p>{i.label}</p>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            value={value as string}
+                            onChange={(e) => setValue(e.target.value)}
+                            className="max-w-70"
+                        />
+                    </div>
+                </div>
+            )
+        }
         case "Range": {
             return (
                 <div className="flex w-full items-center justify-between gap-10 min-h-10">
